@@ -17,6 +17,8 @@ def get_github_files():
         text_files = [file['download_url'] for file in files if file['name'].endswith('.txt')]
         return text_files
     else:
+        st.error(f"Failed to retrieve files from GitHub: {response.status_code}")
+        st.error(f"Response content: {response.text}")
         return []
 
 # Function to read text files from the Examples folder in the GitHub repository
@@ -26,6 +28,9 @@ def read_github_files(file_urls):
         response = requests.get(url)
         if response.status_code == 200:
             examples.append(response.text)
+        else:
+            st.error(f"Failed to retrieve file: {url}")
+            st.error(f"Response content: {response.text}")
     return examples
 
 # Function to fetch facts about a university using SerpAPI
