@@ -52,9 +52,12 @@ def generate_content(institution, page_type, examples):
 # Streamlit app
 st.title("Web Page Content Generator")
 
+if 'generated_pages' not in st.session_state:
+    st.session_state.generated_pages = []
+
 uploaded_file = st.file_uploader("Upload CSV", type="csv")
 
-if uploaded_file:
+if uploaded_file and st.button("Generate Content"):
     # Read the uploaded CSV file
     csv_data = pd.read_csv(uploaded_file)
 
@@ -72,19 +75,22 @@ if uploaded_file:
             page_type = row["Type"]
             generated_content = generate_content(institution, page_type, examples)
             generated_pages.append((institution, page_type, generated_content))
-
-        # Display and download generated content
-        for institution, page_type, content in generated_pages:
-            st.subheader(f"{institution} - {page_type}")
-            st.text_area("Generated Content", content, height=300)
-
-            # Create a download button for the generated content
-            content_text = f"{institution} - {page_type}\n\n{content}"
-            st.download_button(
-                label="Download as Text",
-                data=content_text,
-                file_name=f"{institution}_{page_type}.txt",
-                mime="text/plain"
-            )
+        
+        st.session_state.generated_pages = generated_pages
     else:
         st.error("Failed to retrieve example files from GitHub.")
+
+if st.session_state.generated_pages:
+    # Display and download generated content
+    for institution, page_type, content in st.session_state.generated_pages:
+        st.subheader(f"{institution} - {page_type}")
+        st.text_area("Generated Content", content, height=300)
+
+        # Create a download button for the generated content
+        content_text = f"{institution} - {page_type}\n\n{content}"
+        st.download_button(
+            label="Download as Text",
+            data=content_text,
+            file_name=f"{institution}_{page_type}.txt",
+            mime="text/plain"
+        )
