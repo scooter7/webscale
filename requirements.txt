@@ -2,4 +2,4 @@ streamlit
 pandas
 openai==0.28
 requests
-serpapi
+google-search-results
