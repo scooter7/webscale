@@ -7,11 +7,13 @@ from serpapi import GoogleSearch
 # Load Streamlit secrets for API keys
 openai.api_key = st.secrets["openai_api_key"]
 serpapi_key = st.secrets["serpapi_api_key"]
+github_token = st.secrets["github_token"]
 
 # Function to get a list of all text files in the Examples folder from the GitHub repository
 def get_github_files():
     repo_url = "https://api.github.com/repos/scooter7/webscale/contents/Examples"
-    response = requests.get(repo_url)
+    headers = {"Authorization": f"token {github_token}"}
+    response = requests.get(repo_url, headers=headers)
     if response.status_code == 200:
         files = response.json()
         text_files = [file['download_url'] for file in files if file['name'].endswith('.txt')]
@@ -24,8 +26,9 @@ def get_github_files():
 # Function to read text files from the Examples folder in the GitHub repository
 def read_github_files(file_urls):
     examples = []
+    headers = {"Authorization": f"token {github_token}"}
     for url in file_urls:
-        response = requests.get(url)
+        response = requests.get(url, headers=headers)
         if response.status_code == 200:
             examples.append(response.text)
         else:
