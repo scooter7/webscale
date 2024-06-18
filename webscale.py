@@ -24,12 +24,14 @@ def generate_content(institution, page_type, examples):
     prompt = f"Use the following examples of well-written and structured webpages:\n\n{examples_text}\n\n"
     prompt += f"Create a new {page_type} page for {institution} using the same structure and style."
 
-    response = openai.Completion.create(
-        engine="davinci",
-        prompt=prompt,
-        max_tokens=1500
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": prompt}
+        ]
     )
-    return response.choices[0].text.strip()
+    return response.choices[0].message['content'].strip()
 
 # Streamlit app
 st.title("Web Page Content Generator")
