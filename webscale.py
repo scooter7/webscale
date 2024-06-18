@@ -2,10 +2,11 @@ import streamlit as st
 import pandas as pd
 import openai
 import requests
-from io import StringIO
+from serpapi import GoogleSearch
 
-# Load Streamlit secrets for OpenAI API key
+# Load Streamlit secrets for API keys
 openai.api_key = st.secrets["openai_api_key"]
+serpapi_key = st.secrets["serpapi_api_key"]
 
 # Function to get a list of all text files in the Examples folder from the GitHub repository
 def get_github_files():
@@ -27,8 +28,25 @@ def read_github_files(file_urls):
             examples.append(response.text)
     return examples
 
+# Function to fetch facts about a university using SerpAPI
+def fetch_university_facts(university_name):
+    params = {
+        "engine": "google",
+        "q": university_name,
+        "api_key": serpapi_key
+    }
+    search = GoogleSearch(params)
+    results = search.get_dict()
+    facts = []
+    
+    if 'organic_results' in results:
+        for result in results['organic_results'][:3]:  # Limit to top 3 results
+            facts.append(result['snippet'])
+    
+    return " ".join(facts)
+
 # Function to analyze examples and generate new content using OpenAI
-def generate_content(institution, page_type, examples):
+def generate_content(institution, page_type, examples, facts):
     examples_text = "\n\n".join(examples)
     prompt = (
         "The following are examples of well-written and structured webpages:\n\n"
@@ -36,6 +54,7 @@ def generate_content(institution, page_type, examples):
         "Based on the above examples, create a new webpage with the following details:\n"
         f"Institution: {institution}\n"
         f"Type of page: {page_type}\n"
+        f"Include the following facts about the institution: {facts}\n"
         "The new page should follow the same structure and writing style as the examples provided. "
         "Please avoid using markdown characters in the output."
     )
@@ -73,7 +92,8 @@ if uploaded_file and st.button("Generate Content"):
         for _, row in csv_data.iterrows():
             institution = row["Institution"]
             page_type = row["Type"]
-            generated_content = generate_content(institution, page_type, examples)
+            facts = fetch_university_facts(institution)
+            generated_content = generate_content(institution, page_type, examples, facts)
             generated_pages.append((institution, page_type, generated_content))
         
         st.session_state.generated_pages = generated_pages
