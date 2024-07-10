@@ -103,7 +103,7 @@ def fetch_university_facts(university_name):
     return " ".join(facts)
 
 # Function to analyze examples and generate new content using OpenAI
-def generate_content_with_examples(institution, page_type, examples, facts):
+def generate_content_with_examples(institution, page_type, examples, facts, writing_styles, style_weights, keywords, audience, specific_facts_stats, min_chars, max_chars):
     examples_text = "\n\n".join(examples)
     prompt = (
         "The following are examples of well-written and structured webpages:\n\n"
@@ -112,18 +112,27 @@ def generate_content_with_examples(institution, page_type, examples, facts):
         f"Institution: {institution}\n"
         f"Type of page: {page_type}\n"
         f"Include the following facts about the institution: {facts}\n"
-        "The new page should follow the same structure and writing style as the examples provided. "
-        "Please avoid using markdown characters in the output."
     )
 
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt}
-        ]
-    )
-    return response.choices[0].message['content'].strip()
+    if keywords:
+        prompt += f"\nKeywords: {keywords}"
+    if audience:
+        prompt += f"\nAudience: {audience}"
+    if specific_facts_stats:
+        prompt += f"\nFacts/Stats: {specific_facts_stats}"
+    if min_chars:
+        prompt += f"\nMinimum Character Count: {min_chars}"
+    if max_chars:
+        prompt += f"\nMaximum Character Count: {max_chars}"
+
+    messages = [{"role": "system", "content": "You are a helpful assistant."}]
+    messages.append({"role": "user", "content": prompt})
+    for i, style in enumerate(writing_styles):
+        weight = style_weights[i]
+        messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style.split(' - ')[1]} manner."})
+
+    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
+    return response.choices[0].message["content"].strip()
 
 def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats, min_chars, max_chars):
     full_prompt = user_prompt
@@ -182,7 +191,10 @@ def main():
     uploaded_file = st.file_uploader("Upload CSV", type="csv")
 
     with st.expander("Input Fields"):
-        user_prompt = st.text_area("Specify a prompt about the type of content you want produced:", "" if use_examples else "")
+        if not use_examples:
+            user_prompt = st.text_area("Specify a prompt about the type of content you want produced:", "")
+        else:
+            user_prompt = ""
         keywords = st.text_area("Optional: Specify specific keywords to be used:", "")
         audience = st.text_input("Optional: Define the audience for the generated content:", "")
         specific_facts_stats = st.text_area("Optional: Add specific facts or stats to be included:", "")
@@ -214,7 +226,7 @@ def main():
                     institution = row["Institution"]
                     page_type = row["Type"]
                     facts = fetch_university_facts(institution)
-                    generated_content = generate_content_with_examples(institution, page_type, examples, facts)
+                    generated_content = generate_content_with_examples(institution, page_type, examples, facts, writing_styles, style_weights, keywords, audience, specific_facts_stats, min_chars, max_chars)
                     generated_pages.append((institution, page_type, generated_content))
 
                 st.session_state.generated_pages = generated_pages
