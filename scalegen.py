@@ -241,7 +241,7 @@ def main():
 
     if st.session_state.generated_pages:
         # Display and download generated content
-        for institution, page_type, content in st.session_state.generated_pages:
+        for idx, (institution, page_type, content) in enumerate(st.session_state.generated_pages):
             st.subheader(f"{institution} - {page_type}")
             st.text_area("Generated Content", content, height=300)
 
@@ -251,7 +251,8 @@ def main():
                 label="Download as Text",
                 data=content_text,
                 file_name=f"{institution}_{page_type}.txt",
-                mime="text/plain"
+                mime="text/plain",
+                key=f"download_button_{idx}"
             )
 
     st.markdown("---")
@@ -270,7 +271,7 @@ def main():
         response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=revision_messages)
         revised_content = response.choices[0].message["content"].strip()
         st.text(revised_content)
-        st.download_button("Download Revised Content", revised_content, "revised_content_revision.txt")
+        st.download_button("Download Revised Content", revised_content, "revised_content_revision.txt", key="download_revised_content")
 
     st.markdown('</div>', unsafe_allow_html=True)
 
