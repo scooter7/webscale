@@ -175,6 +175,10 @@ def main():
     st.markdown("---")
     use_examples = st.checkbox("Use examples?")
 
+    # Initialize the session state for generated pages
+    if 'generated_pages' not in st.session_state:
+        st.session_state.generated_pages = []
+
     if use_examples:
         uploaded_file = st.file_uploader("Upload CSV", type="csv")
 
