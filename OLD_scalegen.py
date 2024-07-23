@@ -180,7 +180,7 @@ placeholders = {
 }
 
 def main():
-    st.title("Web Page Content Generator")
+    st.title("AI Content Generator")
     st.markdown("---")
     use_examples = st.checkbox("Use examples?")
 
