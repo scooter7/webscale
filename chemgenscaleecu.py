@@ -185,7 +185,7 @@ def main():
                 page_type = row["Type"]
                 keywords = row["Keywords"]
                 audience = row["Audience"]
-                specific_facts_stats = row["Facts"]
+                specific_facts_stats = row["Facts"]  # Use the specific facts verbatim
                 min_chars = row["Minimum"]
                 max_chars = row["Maximum"]
                 style_weights = [
@@ -197,7 +197,7 @@ def main():
                 
                 facts = fetch_university_facts(institution)
                 generated_content = generate_content_with_examples(
-                    institution, page_type, examples, facts, writing_styles, style_weights, keywords, audience, specific_facts_stats, min_chars, max_chars
+                    institution, page_type, examples, specific_facts_stats, writing_styles, style_weights, keywords, audience, specific_facts_stats, min_chars, max_chars
                 )
                 generated_pages.append((institution, page_type, generated_content))
 
