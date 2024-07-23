@@ -134,31 +134,6 @@ def generate_content_with_examples(institution, page_type, examples, facts, writ
     response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
     return response.choices[0].message["content"].strip()
 
-def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats, min_chars, max_chars):
-    full_prompt = user_prompt
-    if keywords:
-        full_prompt += f"\nKeywords: {keywords}"
-    if audience:
-        full_prompt += f"\nAudience: {audience}"
-    if specific_facts_stats:
-        full_prompt += f"\nFacts/Stats: {specific_facts_stats}"
-    if min_chars:
-        full_prompt += f"\nMinimum Character Count: {min_chars}"
-    if max_chars:
-        full_prompt += f"\nMaximum Character Count: {max_chars}"
-
-    messages = [{"role": "system", "content": full_prompt}]
-    messages.append({"role": "user", "content": content})
-    
-    for i, style in enumerate(writing_styles):
-        weight = style_weights[i]
-        if weight > 0:  # Only include non-zero weights
-            style_name = style.split(' - ')[1]  # Extract the style name
-            messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style_name} manner."})
-
-    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
-    return response.choices[0].message["content"].strip()
-
 placeholders = {
     "Purple - caring, encouraging": {"verbs": ["assist", "befriend", "care", "collaborate", "connect", "embrace", "empower", "encourage", "foster", "give", "help", "nourish", "nurture", "promote", "protect", "provide", "serve", "share", "shepherd", "steward", "tend", "uplift", "value", "welcome"], "adjectives": ["caring", "encouraging", "attentive", "compassionate", "empathetic", "generous", "hospitable", "nurturing", "protective", "selfless", "supportive", "welcoming"], 
      "beliefs": ['Believe people should be cared for and encouraged', 'Desire to make others feel safe and supported', 'Have a strong desire to mend and heal', 'Become loyal teammates and trusted allies', 'Are put off by aggression and selfish motivations']},
@@ -185,7 +160,6 @@ placeholders = {
 def main():
     st.title("AI Content Generator")
     st.markdown("---")
-    use_examples = st.checkbox("Use examples?")
 
     # Initialize the session state for generated pages
     if 'generated_pages' not in st.session_state:
@@ -193,52 +167,19 @@ def main():
 
     uploaded_file = st.file_uploader("Upload CSV", type="csv")
 
-    with st.expander("Input Fields"):
-        if not use_examples:
-            user_prompt = st.text_area("Specify a prompt about the type of content you want produced:", "")
-        else:
-            user_prompt = ""
-        user_content = st.text_area("Paste your content here (ONLY IF MODIFYING EXISTING CONTENT):")
-        
     if uploaded_file and st.button("Generate Content"):
         # Read the uploaded CSV file
         csv_data = pd.read_csv(uploaded_file)
 
-        if use_examples:
-            # Get the list of text files from GitHub repository
-            file_urls = get_github_files()
+        # Get the list of text files from GitHub repository
+        file_urls = get_github_files()
 
-            if file_urls:
-                # Read examples from GitHub repository
-                examples = read_github_files(file_urls)
+        if file_urls:
+            # Read examples from GitHub repository
+            examples = read_github_files(file_urls)
 
-                # Generate content for each row in the CSV
-                generated_pages = []
-                for _, row in csv_data.iterrows():
-                    institution = row["Institution"]
-                    page_type = row["Type"]
-                    keywords = row["Keywords"]
-                    audience = row["Audience"]
-                    specific_facts_stats = row["Facts"]
-                    min_chars = row["Minimum"]
-                    max_chars = row["Maximum"]
-                    style_weights = [
-                        row["Purple"], row["Green"], row["Maroon"], row["Orange"],
-                        row["Yellow"], row["Red"], row["Blue"], row["Pink"],
-                        row["Silver"], row["Beige"]
-                    ]
-                    writing_styles = list(placeholders.keys())
-                    
-                    facts = fetch_university_facts(institution)
-                    generated_content = generate_content_with_examples(
-                        institution, page_type, examples, facts, writing_styles, style_weights, keywords, audience, specific_facts_stats, min_chars, max_chars
-                    )
-                    generated_pages.append((institution, page_type, generated_content))
-
-                st.session_state.generated_pages = generated_pages
-            else:
-                st.error("Failed to retrieve example files from GitHub.")
-        else:
+            # Generate content for each row in the CSV
+            generated_pages = []
             for _, row in csv_data.iterrows():
                 institution = row["Institution"]
                 page_type = row["Type"]
@@ -254,10 +195,15 @@ def main():
                 ]
                 writing_styles = list(placeholders.keys())
                 
-                revised_content = generate_article(
-                    user_content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats, min_chars, max_chars
+                facts = fetch_university_facts(institution)
+                generated_content = generate_content_with_examples(
+                    institution, page_type, examples, facts, writing_styles, style_weights, keywords, audience, specific_facts_stats, min_chars, max_chars
                 )
-                st.session_state.generated_pages.append((institution, page_type, revised_content))
+                generated_pages.append((institution, page_type, generated_content))
+
+            st.session_state.generated_pages = generated_pages
+        else:
+            st.error("Failed to retrieve example files from GitHub.")
 
     if st.session_state.generated_pages:
         # Display and download generated content
