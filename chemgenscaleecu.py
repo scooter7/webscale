@@ -158,6 +158,14 @@ placeholders = {
 }
 
 def main():
+    # Hide the Streamlit toolbar
+    hide_toolbar_css = """
+    <style>
+        .css-14xtw13.e8zbici0 { display: none !important; }
+    </style>
+    """
+    st.markdown(hide_toolbar_css, unsafe_allow_html=True)
+    
     st.title("AI Content Generator")
     st.markdown("---")
 
