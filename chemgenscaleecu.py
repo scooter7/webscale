@@ -4,6 +4,21 @@ import openai
 import requests
 from serpapi import GoogleSearch
 
+# Add custom CSS to hide the header and toolbar
+st.markdown(
+    """
+    <style>
+    .css-18e3th9 {
+        display: none;
+    }
+    .css-1d391kg {
+        display: none;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # Add logo
 st.markdown(
     """
@@ -158,14 +173,6 @@ placeholders = {
 }
 
 def main():
-    # Hide the Streamlit toolbar
-    hide_toolbar_css = """
-    <style>
-        .css-14xtw13.e8zbici0 { display: none !important; }
-    </style>
-    """
-    st.markdown(hide_toolbar_css, unsafe_allow_html=True)
-    
     st.title("AI Content Generator")
     st.markdown("---")
 
@@ -203,7 +210,6 @@ def main():
                 ]
                 writing_styles = list(placeholders.keys())
                 
-                facts = fetch_university_facts(institution)
                 generated_content = generate_content_with_examples(
                     institution, page_type, examples, specific_facts_stats, writing_styles, style_weights, keywords, audience, specific_facts_stats, min_chars, max_chars
                 )
