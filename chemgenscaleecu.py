@@ -124,9 +124,12 @@ def generate_content_with_examples(institution, page_type, examples, facts, writ
 
     messages = [{"role": "system", "content": "You are a helpful assistant."}]
     messages.append({"role": "user", "content": prompt})
+    
     for i, style in enumerate(writing_styles):
         weight = style_weights[i]
-        messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style.split(' - ')[1]} manner."})
+        if weight > 0:  # Only include non-zero weights
+            style_name = style.split(' - ')[1]  # Extract the style name
+            messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style_name} manner."})
 
     response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
     return response.choices[0].message["content"].strip()
@@ -146,9 +149,12 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
 
     messages = [{"role": "system", "content": full_prompt}]
     messages.append({"role": "user", "content": content})
+    
     for i, style in enumerate(writing_styles):
         weight = style_weights[i]
-        messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style.split(' - ')[1]} manner."})
+        if weight > 0:  # Only include non-zero weights
+            style_name = style.split(' - ')[1]  # Extract the style name
+            messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style_name} manner."})
 
     response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
     return response.choices[0].message["content"].strip()
