@@ -8,10 +8,7 @@ from serpapi import GoogleSearch
 st.markdown(
     """
     <style>
-    .css-18e3th9 {
-        display: none;
-    }
-    .css-1d391kg {
+    .st-emotion-cache-12fmjuu.ezrtsby2 {
         display: none;
     }
     </style>
