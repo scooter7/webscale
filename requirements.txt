@@ -3,3 +3,5 @@ pandas
 openai==0.28
 requests
 google-search-results
+replicate
+streamlit-image-select
