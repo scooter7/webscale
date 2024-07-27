@@ -3,8 +3,6 @@ import pandas as pd
 import openai
 import requests
 import replicate
-import zipfile
-import io
 
 # Add custom CSS to hide the header and toolbar
 st.markdown(
@@ -124,7 +122,7 @@ def generate_content_with_examples(institution, page_type, examples, facts, writ
 
     messages = [{"role": "system", "content": "You are a helpful assistant."}]
     messages.append({"role": "user", "content": prompt})
-    
+
     for i, style in enumerate(writing_styles):
         weight = style_weights[i]
         if weight > 0:  # Only include non-zero weights
