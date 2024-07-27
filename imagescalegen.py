@@ -107,19 +107,20 @@ def generate_content_with_examples(institution, page_type, examples, facts, writ
         "Based on the above examples, create a new webpage with the following details:\n"
         f"Institution: {institution}\n"
         f"Type of page: {page_type}\n"
-        f"Include the following facts about the institution: {facts}\n"
     )
 
+    if facts:
+        prompt += f"Include the following facts about the institution: {facts}\n"
     if keywords:
-        prompt += f"\nKeywords: {keywords}"
+        prompt += f"Keywords: {keywords}\n"
     if audience:
-        prompt += f"\nAudience: {audience}"
+        prompt += f"Audience: {audience}\n"
     if specific_facts_stats:
-        prompt += f"\nFacts/Stats: {specific_facts_stats}"
+        prompt += f"Facts/Stats: {specific_facts_stats}\n"
     if min_chars:
-        prompt += f"\nMinimum Character Count: {min_chars}"
+        prompt += f"Minimum Character Count: {min_chars}\n"
     if max_chars:
-        prompt += f"\nMaximum Character Count: {max_chars}"
+        prompt += f"Maximum Character Count: {max_chars}\n"
 
     messages = [{"role": "system", "content": "You are a helpful assistant."}]
     messages.append({"role": "user", "content": prompt})
@@ -173,20 +174,20 @@ def main():
 
             generated_pages = []
             for _, row in csv_data.iterrows():
-                institution = row["Institution"]
-                page_type = row["Type"]
-                keywords = row["Keywords"]
-                audience = row["Audience"]
-                specific_facts_stats = row["Facts"]
-                min_chars = row["Minimum"]
-                max_chars = row["Maximum"]
+                institution = row.get("Institution", "Unknown Institution")
+                page_type = row.get("Type", "General")
+                keywords = row.get("Keywords", "")
+                audience = row.get("Audience", "")
+                specific_facts_stats = row.get("Facts", "")
+                min_chars = row.get("Minimum", "")
+                max_chars = row.get("Maximum", "")
                 style_weights = [
-                    row["Purple"], row["Green"], row["Maroon"], row["Orange"],
-                    row["Yellow"], row["Red"], row["Blue"], row["Pink"],
-                    row["Silver"], row["Beige"]
+                    row.get("Purple", 0), row.get("Green", 0), row.get("Maroon", 0), row.get("Orange", 0),
+                    row.get("Yellow", 0), row.get("Red", 0), row.get("Blue", 0), row.get("Pink", 0),
+                    row.get("Silver", 0), row.get("Beige", 0)
                 ]
                 writing_styles = list(placeholders.keys())
-                image_description = row["Image"]
+                image_description = row.get("Image", "")
                 
                 generated_content, image_url = generate_content_with_examples(
                     institution, page_type, examples, specific_facts_stats, writing_styles, style_weights, keywords, audience, specific_facts_stats, min_chars, max_chars, image_description
