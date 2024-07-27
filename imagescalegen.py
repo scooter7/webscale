@@ -56,7 +56,7 @@ st.markdown(
 st.markdown(
     """
     <div class="logo-container">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/East_Carolina_University.svg/1280px-East_Carolina_University.svg.png" alt="Logo">
+        <img src="https://wfin.com/wp-content/uploads/2018/08/UF-Academic-Logo-1.jpg" alt="Logo">
     </div>
     """,
     unsafe_allow_html=True
