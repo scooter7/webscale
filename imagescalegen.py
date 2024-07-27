@@ -129,7 +129,11 @@ def generate_content_with_examples(institution, page_type, examples, facts, writ
             style_name = style.split(' - ')[1]  # Extract the style name
             messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style_name} manner."})
 
+    st.write("Prompt sent to OpenAI:")
+    st.write(prompt)
     response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
+    st.write("Response from OpenAI:")
+    st.write(response)
     generated_text = response.choices[0].message["content"].strip()
 
     # Generate image using the image_description
@@ -190,7 +194,8 @@ def main():
             examples = read_github_files(file_urls)
 
             generated_pages = []
-            for _, row in csv_data.iterrows():
+            for idx, row in csv_data.iterrows():
+                st.write(f"Processing row {idx + 1}")
                 institution = row.get("Institution", "Unknown Institution")
                 page_type = row.get("Type", "General")
                 keywords = row.get("Keywords", "")
@@ -206,9 +211,26 @@ def main():
                 writing_styles = list(placeholders.keys())
                 image_description = row.get("Image", "")
                 
+                st.write(f"Row {idx + 1} data:")
+                st.write({
+                    "institution": institution,
+                    "page_type": page_type,
+                    "keywords": keywords,
+                    "audience": audience,
+                    "specific_facts_stats": specific_facts_stats,
+                    "min_chars": min_chars,
+                    "max_chars": max_chars,
+                    "style_weights": style_weights,
+                    "image_description": image_description
+                })
+                
                 generated_content, image_url = generate_content_with_examples(
                     institution, page_type, examples, specific_facts_stats, writing_styles, style_weights, keywords, audience, specific_facts_stats, min_chars, max_chars, image_description
                 )
+                
+                st.write(f"Generated content for row {idx + 1}:")
+                st.write(generated_content)
+                
                 generated_pages.append((institution, page_type, generated_content, image_url))
 
             st.session_state.generated_pages = generated_pages
