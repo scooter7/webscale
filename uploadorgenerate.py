@@ -188,13 +188,13 @@ def main():
         style_weights.append(weight)
 
     if st.button("Generate Content"):
-        if uploaded_file:
-            csv_data = pd.read_csv(uploaded_file)
-            if use_examples:
+        if uploaded_file or not use_examples:
+            generated_pages = []
+            if use_examples and uploaded_file:
+                csv_data = pd.read_csv(uploaded_file)
                 file_urls = get_github_files()
                 if file_urls:
                     examples = read_github_files(file_urls)
-                    generated_pages = []
                     for _, row in csv_data.iterrows():
                         institution = row["Institution"]
                         page_type = row["Type"]
@@ -204,20 +204,16 @@ def main():
                             style_weights, keywords, audience, specific_facts_stats, min_chars, max_chars
                         )
                         generated_pages.append((institution, page_type, generated_content))
-                    st.session_state.generated_pages = generated_pages
                 else:
                     st.error("Failed to retrieve example files from GitHub.")
             else:
-                generated_pages = []
-                for _, row in csv_data.iterrows():
-                    institution = row["Institution"]
-                    page_type = row["Type"]
-                    revised_content = generate_article(
-                        user_content, writing_styles, style_weights, user_prompt, 
-                        keywords, audience, specific_facts_stats, min_chars, max_chars
-                    )
-                    generated_pages.append((institution, page_type, revised_content))
-                st.session_state.generated_pages = generated_pages
+                generated_content = generate_article(
+                    user_content, writing_styles, style_weights, user_prompt, 
+                    keywords, audience, specific_facts_stats, min_chars, max_chars
+                )
+                generated_pages.append(("User Content", "Custom Page", generated_content))
+
+            st.session_state.generated_pages = generated_pages
 
     if "generated_pages" in st.session_state:
         for idx, (institution, page_type, content) in enumerate(st.session_state.generated_pages):
