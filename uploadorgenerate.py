@@ -208,48 +208,42 @@ def main():
             weight = st.slider(f"Weight for {style}:", 0, 100, 50)
             style_weights.append(weight)
 
+    # Ensure the button is always visible
     if uploaded_file:
-        # Make sure the button is visible regardless of the checkbox selection
         if st.button("Generate Content"):
+            # If examples are used, fetch and process examples
             if use_examples:
-                # Get the list of text files from GitHub repository
                 file_urls = get_github_files()
-
                 if file_urls:
-                    # Read examples from GitHub repository
                     examples = read_github_files(file_urls)
-
-                    # Generate content for each row in the CSV
                     generated_pages = []
-                    for _, row in csv_data.iterrows():
+                    for _, row in pd.read_csv(uploaded_file).iterrows():
                         institution = row["Institution"]
                         page_type = row["Type"]
                         facts = fetch_university_facts(institution)
                         generated_content = generate_content_with_examples(
-                            institution, page_type, examples, facts, writing_styles, style_weights, 
-                            keywords, audience, specific_facts_stats, min_chars, max_chars)
+                            institution, page_type, examples, facts, writing_styles, 
+                            style_weights, keywords, audience, specific_facts_stats, min_chars, max_chars
+                        )
                         generated_pages.append((institution, page_type, generated_content))
-
                     st.session_state.generated_pages = generated_pages
                 else:
                     st.error("Failed to retrieve example files from GitHub.")
             else:
                 # Generate content without examples
-                for _, row in csv_data.iterrows():
+                for _, row in pd.read_csv(uploaded_file).iterrows():
                     institution = row["Institution"]
                     page_type = row["Type"]
                     revised_content = generate_article(
                         user_content, writing_styles, style_weights, user_prompt, 
-                        keywords, audience, specific_facts_stats, min_chars, max_chars)
+                        keywords, audience, specific_facts_stats, min_chars, max_chars
+                    )
                     st.session_state.generated_pages.append((institution, page_type, revised_content))
 
     if st.session_state.generated_pages:
-        # Display and download generated content
         for idx, (institution, page_type, content) in enumerate(st.session_state.generated_pages):
             st.subheader(f"{institution} - {page_type}")
             st.text_area("Generated Content", content, height=300)
-
-            # Create a download button for the generated content
             content_text = f"{institution} - {page_type}\n\n{content}"
             st.download_button(
                 label="Download as Text",
