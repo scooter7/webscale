@@ -4,6 +4,7 @@ import openai
 import requests
 import replicate
 
+# Add custom CSS to hide the header and toolbar
 st.markdown(
     """
     <style>
@@ -15,6 +16,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# Add logo
 st.markdown(
     """
     <style>
@@ -60,12 +62,14 @@ st.markdown(
 
 st.markdown('<div class="app-container">', unsafe_allow_html=True)
 
+# Load Streamlit secrets for API keys
 openai.api_key = st.secrets["openai_api_key"]
 serpapi_key = st.secrets["serpapi_api_key"]
 github_token = st.secrets["github_token"]
 REPLICATE_API_TOKEN = st.secrets["REPLICATE_API_TOKEN"]
 REPLICATE_MODEL_ENDPOINTSTABILITY = st.secrets["REPLICATE_MODEL_ENDPOINTSTABILITY"]
 
+# Function to get a list of all text files in the Examples folder from the GitHub repository
 def get_github_files():
     repo_url = "https://api.github.com/repos/scooter7/webscale/contents/Examples"
     headers = {"Authorization": f"token {github_token}"}
@@ -79,6 +83,7 @@ def get_github_files():
         st.error(f"Response content: {response.text}")
         return []
 
+# Function to read text files from the Examples folder in the GitHub repository
 def read_github_files(file_urls):
     examples = []
     headers = {"Authorization": f"token {github_token}"}
@@ -91,12 +96,10 @@ def read_github_files(file_urls):
             st.error(f"Response content: {response.text}")
     return examples
 
-def chunk_text(text, chunk_size=2000):
-    return [text[i:i + chunk_size] for i in range(0, len(text), chunk_size)]
-
+# Function to analyze examples and generate new content using OpenAI
 def generate_content_with_examples(institution, page_type, examples, facts, writing_styles, style_weights, keywords, audience, specific_facts_stats, min_chars, max_chars, image_description):
     examples_text = "\n\n".join(examples)
-    prompt_base = (
+    prompt = (
         "The following are examples of well-written and structured webpages:\n\n"
         f"{examples_text}\n\n"
         "Based on the above examples, create a new webpage with the following details:\n"
@@ -105,32 +108,31 @@ def generate_content_with_examples(institution, page_type, examples, facts, writ
     )
 
     if facts:
-        prompt_base += f"Include the following facts about the institution: {facts}\n"
+        prompt += f"Include the following facts about the institution: {facts}\n"
     if keywords:
-        prompt_base += f"Keywords: {keywords}\n"
+        prompt += f"Keywords: {keywords}\n"
     if audience:
-        prompt_base += f"Audience: {audience}\n"
+        prompt += f"Audience: {audience}\n"
     if specific_facts_stats:
-        prompt_base += f"Facts/Stats: {specific_facts_stats}\n"
+        prompt += f"Facts/Stats: {specific_facts_stats}\n"
     if min_chars:
-        prompt_base += f"Minimum Character Count: {min_chars}\n"
+        prompt += f"Minimum Character Count: {min_chars}\n"
     if max_chars:
-        prompt_base += f"Maximum Character Count: {max_chars}\n"
+        prompt += f"Maximum Character Count: {max_chars}\n"
 
-    text_chunks = chunk_text(prompt_base)
+    messages = [{"role": "system", "content": "You are a helpful assistant."}]
+    messages.append({"role": "user", "content": prompt})
 
-    detailed_responses = []
-    for chunk in text_chunks:
-        prompt_text = chunk
-        response = openai.ChatCompletion.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": prompt_text}],
-            max_tokens=500
-        )
-        detailed_responses.append(response.choices[0].message['content'])
+    for i, style in enumerate(writing_styles):
+        weight = style_weights[i]
+        if weight > 0:  # Only include non-zero weights
+            style_name = style.split(' - ')[1]  # Extract the style name
+            messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style_name} manner."})
 
-    generated_text = "\n".join(detailed_responses)
+    response = openai.ChatCompletion.create(model="gpt-4o-mini", messages=messages)
+    generated_text = response.choices[0].message["content"].strip()
 
+    # Generate image using the image_description
     output = replicate.run(
         REPLICATE_MODEL_ENDPOINTSTABILITY,
         input={
@@ -209,23 +211,25 @@ def main():
                 )
                 generated_pages.append((institution, page_type, generated_content, image_url))
 
-                st.subheader(f"{institution} - {page_type}")
-                st.text_area("Generated Content", generated_content, height=300)
-                if image_url:
-                    st.image(image_url, caption="Generated Image", use_column_width=True)
-
-                content_text = f"{institution} - {page_type}\n\n{generated_content}"
-                st.download_button(
-                    label="Download as Text",
-                    data=content_text,
-                    file_name=f"{institution}_{page_type}.txt",
-                    mime="text/plain",
-                    key=f"download_button_{_}"
-                )
-
             st.session_state.generated_pages = generated_pages
         else:
             st.error("Failed to retrieve example files from GitHub.")
+
+    if st.session_state.generated_pages:
+        for idx, (institution, page_type, content, image_url) in enumerate(st.session_state.generated_pages):
+            st.subheader(f"{institution} - {page_type}")
+            st.text_area("Generated Content", content, height=300)
+            if image_url:
+                st.image(image_url, caption="Generated Image", use_column_width=True)
+
+            content_text = f"{institution} - {page_type}\n\n{content}"
+            st.download_button(
+                label="Download as Text",
+                data=content_text,
+                file_name=f"{institution}_{page_type}.txt",
+                mime="text/plain",
+                key=f"download_button_{idx}"
+            )
 
     st.markdown("---")
     st.header("Revision Section")
@@ -240,7 +244,7 @@ def main():
             {"role": "user", "content": pasted_content},
             {"role": "user", "content": revision_requests}
         ]
-        response = openai.ChatCompletion.create(model="gpt-4o-mini", messages=revision_messages, max_tokens=500)
+        response = openai.ChatCompletion.create(model="gpt-4o-mini", messages=revision_messages)
         revised_content = response.choices[0].message["content"].strip()
         st.text(revised_content)
         st.download_button("Download Revised Content", revised_content, "revised_content_revision.txt", key="download_revised_content")
