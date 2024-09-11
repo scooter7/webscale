@@ -143,8 +143,8 @@ def generate_content_with_examples(institution, page_type, examples, facts, writ
             style_name = style.split(' - ')[1]  # Extract the style name
             messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style_name} manner."})
 
-    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
-    return response.choices[0].message["content"].strip()
+    response = openai.ChatCompletion.create(model="gpt-4o-mini", messages=messages)
+    generated_text = response.choices[0].message["content"].strip()
 
 placeholders = {
     "Purple - caring, encouraging": {"verbs": ["assist", "befriend", "care", "collaborate", "connect", "embrace", "empower", "encourage", "foster", "give", "help", "nourish", "nurture", "promote", "protect", "provide", "serve", "share", "shepherd", "steward", "tend", "uplift", "value", "welcome"], "adjectives": ["caring", "encouraging", "attentive", "compassionate", "empathetic", "generous", "hospitable", "nurturing", "protective", "selfless", "supportive", "welcoming"], 
@@ -245,7 +245,7 @@ def main():
             {"role": "user", "content": pasted_content},
             {"role": "user", "content": revision_requests}
         ]
-        response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=revision_messages)
+        response = openai.ChatCompletion.create(model="gpt-4o-mini", messages=revision_messages)
         revised_content = response.choices[0].message["content"].strip()
         st.text(revised_content)
         st.download_button("Download Revised Content", revised_content, "revised_content_revision.txt", key="download_revised_content")
