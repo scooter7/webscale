@@ -209,25 +209,23 @@ def main():
                 )
                 generated_pages.append((institution, page_type, generated_content, image_url))
 
+                st.subheader(f"{institution} - {page_type}")
+                st.text_area("Generated Content", generated_content, height=300)
+                if image_url:
+                    st.image(image_url, caption="Generated Image", use_column_width=True)
+
+                content_text = f"{institution} - {page_type}\n\n{generated_content}"
+                st.download_button(
+                    label="Download as Text",
+                    data=content_text,
+                    file_name=f"{institution}_{page_type}.txt",
+                    mime="text/plain",
+                    key=f"download_button_{_}"
+                )
+
             st.session_state.generated_pages = generated_pages
         else:
             st.error("Failed to retrieve example files from GitHub.")
-
-    if st.session_state.generated_pages:
-        for idx, (institution, page_type, content, image_url) in enumerate(st.session_state.generated_pages):
-            st.subheader(f"{institution} - {page_type}")
-            st.text_area("Generated Content", content, height=300)
-            if image_url:
-                st.image(image_url, caption="Generated Image", use_column_width=True)
-
-            content_text = f"{institution} - {page_type}\n\n{content}"
-            st.download_button(
-                label="Download as Text",
-                data=content_text,
-                file_name=f"{institution}_{page_type}.txt",
-                mime="text/plain",
-                key=f"download_button_{idx}"
-            )
 
     st.markdown("---")
     st.header("Revision Section")
