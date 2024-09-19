@@ -52,7 +52,7 @@ st.markdown(
 st.markdown(
     """
     <div class="logo-container">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/East_Carolina_University.svg/1280px-East_Carolina_University.svg.png" alt="Logo">
+        <img src="https://brand.ecu.edu/wp-content/pv-uploads/sites/168/2017/09/ECU_lockup_primary_Purple.jpg" alt="Logo">
     </div>
     """,
     unsafe_allow_html=True
