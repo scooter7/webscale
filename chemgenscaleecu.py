@@ -25,7 +25,7 @@ st.markdown(
         margin-bottom: 20px;
     }
     .logo-container img {
-        width: 600px;
+        width: 300px;
     }
     .app-container {
         border-left: 5px solid #58258b;
