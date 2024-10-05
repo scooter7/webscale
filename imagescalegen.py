@@ -54,7 +54,7 @@ st.markdown(
 st.markdown(
     """
     <div class="logo-container">
-        <img src="https://wfin.com/wp-content/uploads/2018/08/UF-Academic-Logo-1.jpg" alt="Logo">
+        <img src="https://www.dmacc.edu/news/images/20231030.jpg" alt="Logo">
     </div>
     """,
     unsafe_allow_html=True
