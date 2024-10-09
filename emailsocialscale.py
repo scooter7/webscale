@@ -64,6 +64,31 @@ openai.api_key = st.secrets["openai_api_key"]
 serpapi_key = st.secrets["serpapi_api_key"]
 github_token = st.secrets["github_token"]
 
+# Move the placeholders dictionary here so it's defined before main
+placeholders = {
+    "Purple - caring, encouraging": {
+        "verbs": ["assist", "befriend", "care", "collaborate", "connect", "embrace", "empower", "encourage", "foster", "give", "help", "nourish", "nurture", "promote", "protect", "provide", "serve", "share", "shepherd", "steward", "tend", "uplift", "value", "welcome"],
+        "adjectives": ["caring", "encouraging", "attentive", "compassionate", "empathetic", "generous", "hospitable", "nurturing", "protective", "selfless", "supportive", "welcoming"],
+        "beliefs": ["Believe people should be cared for and encouraged", "Desire to make others feel safe and supported", "Have a strong desire to mend and heal", "Become loyal teammates and trusted allies", "Are put off by aggression and selfish motivations"]
+    },
+    "Green - adventurous, curious": {
+        "verbs": ["analyze", "discover", "examine", "expand", "explore", "extend", "inquire", "journey", "launch", "move", "pioneer", "pursue", "question", "reach", "search", "uncover", "venture", "wonder"],
+        "adjectives": ["adventurous", "curious", "discerning", "examining", "experiential", "exploratory", "inquisitive", "investigative", "intrepid", "philosophical"],
+        "beliefs": ["The noblest pursuit is the quest for new knowledge", "Continually inquiring and examining everything", "Have an insatiable thirst for progress and discovery", "Cannot sit still or accept present realities", "Curiosity and possibility underpin their actions"]
+    },
+    "Maroon - gritty, determined": {
+        "verbs": ["accomplish", "achieve", "build", "challenge", "commit", "compete", "contend", "dedicate", "defend", "devote", "drive", "endeavor", "entrust", "endure", "fight", "grapple", "grow", "improve", "increase", "overcome", "persevere", "persist", "press on", "pursue", "resolve"],
+        "adjectives": ["competitive", "determined", "gritty", "industrious", "persevering", "relentless", "resilient", "tenacious", "tough", "unwavering"],
+        "beliefs": ["Value extreme and hard work", "Gritty and strong, they’re determined to overcome", "Have no tolerance for laziness or inability", "Highly competitive and intent on proving prowess", "Will not be outpaced or outworked"]
+    },
+    "Orange - artistic, creative": {
+        "verbs": ["compose", "conceptualize", "conceive", "craft", "create", "design", "dream", "envision", "express", "fashion", "form", "imagine", "interpret", "make", "originate", "paint", "perform", "portray", "realize", "shape"],
+        "adjectives": ["artistic", "conceptual", "creative", "eclectic", "expressive", "imaginative", "interpretive", "novel", "original", "whimsical"],
+        "beliefs": ["Intensely expressive", "Communicate in diverse ways", "A lack of imagination and rigidity may feel oppressive", "Constructive, conceptual, and adept storytellers", "Manifesting new and creative concepts is their end goal"]
+    },
+    # Add other color categories...
+}
+
 def get_github_files():
     repo_url = "https://api.github.com/repos/scooter7/webscale/contents/Examples"
     headers = {"Authorization": f"token {github_token}"}
@@ -145,7 +170,7 @@ def generate_content_with_examples(institution, page_type, channel, examples, fa
             style_name = style.split(' - ')[1]
             prompt += f"\nModify {weight}% of the content in a {style_name} manner."
 
-    response = openai.ChatCompletion.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}])
+        response = openai.ChatCompletion.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}])
     return response.choices[0].message["content"].strip()
 
 def main():
@@ -206,3 +231,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
