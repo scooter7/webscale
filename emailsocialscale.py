@@ -148,58 +148,61 @@ def generate_content_with_examples(institution, page_type, channel, examples, fa
     response = openai.ChatCompletion.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}])
     return response.choices[0].message["content"].strip()
 
-# Modify the content generation section to incorporate the new "Channel" column:
-if 'generated_pages' not in st.session_state:
-    st.session_state.generated_pages = []
+def main():
+    if 'generated_pages' not in st.session_state:
+        st.session_state.generated_pages = []
 
-uploaded_file = st.file_uploader("Upload CSV", type="csv")
+    uploaded_file = st.file_uploader("Upload CSV", type="csv")
 
-if uploaded_file and st.button("Generate Content"):
-    csv_data = pd.read_csv(uploaded_file)
+    if uploaded_file and st.button("Generate Content"):
+        csv_data = pd.read_csv(uploaded_file)
 
-    file_urls = get_github_files()
+        file_urls = get_github_files()
 
-    if file_urls:
-        examples = read_github_files(file_urls)
+        if file_urls:
+            examples = read_github_files(file_urls)
 
-        generated_pages = []
-        for _, row in csv_data.iterrows():
-            institution = row["Institution"]
-            page_type = row["Type"]
-            channel = row["Channel"]  # New column for content channel
-            keywords = row["Keywords"]
-            audience = row["Audience"]
-            specific_facts_stats = row["Facts"]
-            min_chars = row["Minimum"]
-            max_chars = row["Maximum"]
-            style_weights = [
-                row["Purple"], row["Green"], row["Maroon"], row["Orange"],
-                row["Yellow"], row["Red"], row["Blue"], row["Pink"],
-                row["Silver"], row["Beige"]
-            ]
-            writing_styles = list(placeholders.keys())
+            generated_pages = []
+            for _, row in csv_data.iterrows():
+                institution = row["Institution"]
+                page_type = row["Type"]
+                channel = row["Channel"]  # New column for content channel
+                keywords = row["Keywords"]
+                audience = row["Audience"]
+                specific_facts_stats = row["Facts"]
+                min_chars = row["Minimum"]
+                max_chars = row["Maximum"]
+                style_weights = [
+                    row["Purple"], row["Green"], row["Maroon"], row["Orange"],
+                    row["Yellow"], row["Red"], row["Blue"], row["Pink"],
+                    row["Silver"], row["Beige"]
+                ]
+                writing_styles = list(placeholders.keys())
 
-            generated_content = generate_content_with_examples(
-                institution, page_type, channel, examples, specific_facts_stats, writing_styles, style_weights, keywords, audience, specific_facts_stats, min_chars, max_chars
+                generated_content = generate_content_with_examples(
+                    institution, page_type, channel, examples, specific_facts_stats, writing_styles, style_weights, keywords, audience, specific_facts_stats, min_chars, max_chars
+                )
+                generated_pages.append((institution, page_type, channel, generated_content))
+
+            st.session_state.generated_pages = generated_pages
+        else:
+            st.error("Failed to retrieve example files from GitHub.")
+
+    if st.session_state.generated_pages:
+        for idx, (institution, page_type, channel, content) in enumerate(st.session_state.generated_pages):
+            st.subheader(f"{institution} - {page_type} ({channel})")
+            st.text_area("Generated Content", content, height=300)
+
+            content_text = f"{institution} - {page_type}\n\n{content}"
+            st.download_button(
+                label="Download as Text",
+                data=content_text,
+                file_name=f"{institution}_{page_type}_{channel}.txt",
+                mime="text/plain",
+                key=f"download_button_{idx}"
             )
-            generated_pages.append((institution, page_type, channel, generated_content))
 
-        st.session_state.generated_pages = generated_pages
-    else:
-        st.error("Failed to retrieve example files from GitHub.")
+    st.markdown('</div>', unsafe_allow_html=True)
 
-if st.session_state.generated_pages:
-    for idx, (institution, page_type, channel, content) in enumerate(st.session_state.generated_pages):
-        st.subheader(f"{institution} - {page_type} ({channel})")
-        st.text_area("Generated Content", content, height=300)
-
-        content_text = f"{institution} - {page_type}\n\n{content}"
-        st.download_button(
-            label="Download as Text",
-            data=content_text,
-            file_name=f"{institution}_{page_type}_{channel}.txt",
-            mime="text/plain",
-            key=f"download_button_{idx}"
-        )
-
-st.markdown('</div>', unsafe_allow_html=True)
+if __name__ == "__main__":
+    main()
