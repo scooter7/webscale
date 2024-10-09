@@ -64,7 +64,6 @@ openai.api_key = st.secrets["openai_api_key"]
 serpapi_key = st.secrets["serpapi_api_key"]
 github_token = st.secrets["github_token"]
 
-# Move the placeholders dictionary here so it's defined before main
 placeholders = {
     "Purple - caring, encouraging": {
         "verbs": ["assist", "befriend", "care", "collaborate", "connect", "embrace", "empower", "encourage", "foster", "give", "help", "nourish", "nurture", "promote", "protect", "provide", "serve", "share", "shepherd", "steward", "tend", "uplift", "value", "welcome"],
@@ -86,16 +85,48 @@ placeholders = {
         "adjectives": ["artistic", "conceptual", "creative", "eclectic", "expressive", "imaginative", "interpretive", "novel", "original", "whimsical"],
         "beliefs": ["Intensely expressive", "Communicate in diverse ways", "A lack of imagination and rigidity may feel oppressive", "Constructive, conceptual, and adept storytellers", "Manifesting new and creative concepts is their end goal"]
     },
-    # Add other color categories...
+    "Yellow - innovative, intelligent": {
+        "verbs": ["accelerate", "advance", "change", "conceive", "create", "engineer", "envision", "experiment", "dream", "ignite", "illuminate", "imagine", "innovate", "inspire", "invent", "pioneer", "progress", "shape", "spark", "solve", "transform", "unleash", "unlock"],
+        "adjectives": ["advanced", "analytical", "brilliant", "experimental", "forward-thinking", "innovative", "intelligent", "inventive", "leading-edge", "visionary"],
+        "beliefs": ["Thrive on new concepts and experimentation", "Live to make things newer and better", "Work well in ambiguity or unknowns", "Feel stifled by established processes and the status quo", "See endless possibilities and opportunities to invent"]
+    },
+    "Red - entertaining, humorous": {
+        "verbs": ["animate", "amuse", "captivate", "cheer", "delight", "encourage", "energize", "engage", "enjoy", "enliven", "entertain", "excite", "express", "inspire", "joke", "motivate", "play", "stir", "uplift"],
+        "adjectives": ["dynamic", "energetic", "engaging", "entertaining", "enthusiastic", "exciting", "fun", "lively", "magnetic", "playful", "humorous"],
+        "beliefs": ["Energetic and uplifting", "Motivated to entertain and create excitement", "Magnetic and able to rally support for new concepts", "Often naturally talented presenters and speakers", "Sensitive to the mood and condition of others"]
+    },
+    "Blue - confident, influential": {
+        "verbs": ["accomplish", "achieve", "affect", "assert", "cause", "command", "determine", "direct", "dominate", "drive", "empower", "establish", "guide", "impact", "impress", "influence", "inspire", "lead", "outpace", "outshine", "realize", "shape", "succeed", "transform", "win"],
+        "adjectives": ["accomplished", "assertive", "confident", "decisive", "elite", "influential", "powerful", "prominent", "proven", "strong"],
+        "beliefs": ["Achievement is paramount", "Highly tolerant of risk and stress", "Seeks influence and accomplishments", "Comfortable making decisions with incomplete information", "Set strategic visions and lead the way"]
+    },
+    "Pink - charming, elegant": {
+        "verbs": ["arise", "aspire", "detail", "dream", "elevate", "enchant", "enrich", "envision", "exceed", "excel", "experience", "improve", "idealize", "imagine", "inspire", "perfect", "poise", "polish", "prepare", "refine", "uplift"],
+        "adjectives": ["aesthetic", "charming", "classic", "dignified", "idealistic", "meticulous", "poised", "polished", "refined", "sophisticated", "elegant"],
+        "beliefs": ["Hold high regard for tradition and excellence", "Dream up and pursue refinement, beauty, and vitality", "Typically highly detailed and very observant", "Mess and disorder only deflates their enthusiasm"]
+    },
+    "Silver - rebellious, daring": {
+        "verbs": ["activate", "campaign", "challenge", "commit", "confront", "dare", "defy", "disrupt", "drive", "excite", "face", "ignite", "incite", "influence", "inspire", "inspirit", "motivate", "move", "push", "rebel", "reimagine", "revolutionize", "rise", "spark", "stir", "fight", "free"],
+        "adjectives": ["bold", "daring", "fearless", "independent", "non-conformist", "radical", "rebellious", "resolute", "unconventional", "valiant"],
+        "beliefs": ["Rule breakers and establishment challengers", "Have a low need to fit in with the pack", "Value unconventional and independent thinking", "Value freedom, boldness, and defiant ideas", "Feel stifled by red tape and bureaucratic systems"]
+    },
+    "Beige - dedicated, humble": {
+        "verbs": ["dedicate", "humble", "collaborate", "empower", "inspire", "empassion", "transform"],
+        "adjectives": ["dedicated", "collaborative", "consistent", "empowering", "enterprising", "humble", "inspiring", "passionate", "proud", "traditional", "transformative"],
+        "beliefs": ["There’s no need to differentiate from others", "All perspectives are equally worth holding", "Will not risk offending anyone", "Light opinions are held quite loosely", "Information tells enough of a story"]
+    }
 }
 
 def get_github_files():
     repo_url = "https://api.github.com/repos/scooter7/webscale/contents/Examples"
     headers = {"Authorization": f"token {github_token}"}
     response = requests.get(repo_url, headers=headers)
+    
+    st.write(f"GitHub API response status: {response.status_code}")  # Debugging output
     if response.status_code == 200:
         files = response.json()
         text_files = [file['download_url'] for file in files if file['name'].endswith('.txt')]
+        st.write(f"Found {len(text_files)} text files in GitHub repository")  # Debugging output
         return text_files
     else:
         st.error(f"Failed to retrieve files from GitHub: {response.status_code}")
@@ -112,6 +143,7 @@ def read_github_files(file_urls):
         else:
             st.error(f"Failed to retrieve file: {url}")
             st.error(f"Response content: {response.text}")
+    st.write(f"Read {len(examples)} examples from GitHub")  # Debugging output
     return examples
 
 def fetch_social_media_posts(institution_name, channel):
@@ -124,14 +156,17 @@ def fetch_social_media_posts(institution_name, channel):
     search = GoogleSearch(params)
     results = search.get_dict()
     
+    st.write(f"SerpAPI search query: {search_query}")  # Debugging output
     posts = []
     if 'organic_results' in results:
         for result in results['organic_results'][:5]:  # Limit to top 5 results for now
             posts.append(result['snippet'])
+        st.write(f"Found {len(posts)} posts from SerpAPI")  # Debugging output
 
     return " ".join(posts)
 
 def generate_content_with_examples(institution, page_type, channel, examples, facts, writing_styles, style_weights, keywords, audience, specific_facts_stats, min_chars, max_chars):
+    st.write(f"Generating content for {institution}, channel: {channel}, page_type: {page_type}")  # Debugging output
     examples_text = "\n\n".join(examples)
 
     if channel == "email":
@@ -170,7 +205,8 @@ def generate_content_with_examples(institution, page_type, channel, examples, fa
             style_name = style.split(' - ')[1]
             prompt += f"\nModify {weight}% of the content in a {style_name} manner."
 
-        response = openai.ChatCompletion.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}])
+    st.write(f"Prompt being sent to OpenAI: {prompt}")  # Debugging output
+    response = openai.ChatCompletion.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}])
     return response.choices[0].message["content"].strip()
 
 def main():
@@ -180,7 +216,9 @@ def main():
     uploaded_file = st.file_uploader("Upload CSV", type="csv")
 
     if uploaded_file and st.button("Generate Content"):
+        st.write("CSV file uploaded successfully.")  # Debugging output
         csv_data = pd.read_csv(uploaded_file)
+        st.write(f"CSV Data: {csv_data.head()}")  # Debugging output
 
         file_urls = get_github_files()
 
@@ -231,4 +269,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
