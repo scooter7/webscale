@@ -181,7 +181,8 @@ def generate_content_with_examples(institution, page_type, channel, examples, fa
 
     if keywords:
         prompt += f"\nKeywords: {keywords}"
-    if audience:
+    
+    if isinstance(audience, str):
         prompt += f"\nAudience: {audience}"
         # Check if a specific reading level is mentioned and apply it
         if "reading level" in audience.lower():
