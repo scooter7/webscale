@@ -183,6 +183,13 @@ def generate_content_with_examples(institution, page_type, channel, examples, fa
         prompt += f"\nKeywords: {keywords}"
     if audience:
         prompt += f"\nAudience: {audience}"
+        # Check if a specific reading level is mentioned and apply it
+        if "reading level" in audience.lower():
+            prompt += "\nEnsure that the content matches the desired reading level specified."
+
+    # Explicitly ask not to use emojis
+    prompt += "\nDo not use any emojis in the generated content."
+
     if specific_facts_stats:
         prompt += f"\nFacts/Stats: {specific_facts_stats}"
     if min_chars:
