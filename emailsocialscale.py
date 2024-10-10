@@ -121,7 +121,7 @@ def get_github_files():
     repo_url = "https://api.github.com/repos/scooter7/webscale/contents/Examples"
     headers = {"Authorization": f"token {github_token}"}
     response = requests.get(repo_url, headers=headers)
-    
+
     if response.status_code == 200:
         files = response.json()
         text_files = [file['download_url'] for file in files if file['name'].endswith('.txt')]
@@ -150,7 +150,7 @@ def fetch_social_media_posts(institution_name, channel):
     }
     search = GoogleSearch(params)
     results = search.get_dict()
-    
+
     posts = []
     if 'organic_results' in results:
         for result in results['organic_results'][:5]:  # Limit to top 5 results
@@ -242,43 +242,46 @@ def main():
 
     if st.session_state.generated_pages:
         for idx, (institution, page_type, channel, content) in enumerate(st.session_state.generated_pages):
-        st.subheader(f"{institution} - {page_type} ({channel})")
-        generated_content = st.text_area("Generated Content", content, height=300, key=f"generated_content_{idx}")
+            st.subheader(f"{institution} - {page_type} ({channel})")
+            generated_content = st.text_area("Generated Content", content, height=300, key=f"generated_content_{idx}")
 
-        revision_prompt = st.text_input(f"Provide revisions for {institution} - {page_type} ({channel})", key=f"revision_prompt_{idx}")
-        if st.button(f"Revise Content {idx}", key=f"revise_button_{idx}"):
-            if revision_prompt:
-                # Generate revised content based on user input
-                revision_response = openai.ChatCompletion.create(
-                    model="gpt-4o-mini",
-                    messages=[
-                        {"role": "system", "content": f"Revise the following content based on the user's feedback:\n\n{generated_content}"},
-                        {"role": "user", "content": revision_prompt}
-                    ]
-                )
-                revised_content = revision_response.choices[0].message["content"].strip()
-                st.session_state.revised_pages.append((institution, page_type, channel, revised_content))
-                st.write("Revision Complete!")
-        
-        if st.session_state.revised_pages:
-            for ridx, (inst, pg_type, chn, revised) in enumerate(st.session_state.revised_pages):
-                if institution == inst and page_type == pg_type and channel == chn:
-                    st.text_area(f"Revised Content for {inst} - {pg_type} ({chn})", revised, height=300, key=f"revised_content_{ridx}")
-
-                    revised_content_text = f"{inst} - {pg_type}\n\n{revised}"
-                    st.download_button(
-                        label="Download Revised Content as Text",
-                        data=revised_content_text,
-                        file_name=f"{inst}_{pg_type}_{chn}_revised.txt",
-                        mime="text/plain",
-                        key=f"download_button_revised_{ridx}"
+            revision_prompt = st.text_input(f"Provide revisions for {institution} - {page_type} ({channel})", key=f"revision_prompt_{idx}")
+            if st.button(f"Revise Content {idx}", key=f"revise_button_{idx}"):
+                if revision_prompt:
+                    # Generate revised content based on user input
+                    revision_response = openai.ChatCompletion.create(
+                        model="gpt-4o-mini",
+                        messages=[
+                            {"role": "system", "content": f"Revise the following content based on the user's feedback:\n\n{generated_content}"},
+                            {"role": "user", "content": revision_prompt}
+                        ]
                     )
+                    revised_content = revision_response.choices[0].message["content"].strip()
+                    st.session_state.revised_pages.append((institution, page_type, channel, revised_content))
+                    st.write("Revision Complete!")
 
-        content_text = f"{institution} - {page_type}\n\n{content}"
-        st.download_button(
-            label="Download as Text",
-            data=content_text,
-            file_name=f"{institution}_{page_type}_{channel}.txt",
-            mime="text/plain",
-            key=f"download_button_{idx}"
-        )
+            if st.session_state.revised_pages:
+                for ridx, (inst, pg_type, chn, revised) in enumerate(st.session_state.revised_pages):
+                    if institution == inst and page_type == pg_type and channel == chn:
+                        st.text_area(f"Revised Content for {inst} - {pg_type} ({chn})", revised, height=300, key=f"revised_content_{ridx}")
+
+                        revised_content_text = f"{inst} - {pg_type}\n\n{revised}"
+                        st.download_button(
+                            label="Download Revised Content as Text",
+                            data=revised_content_text,
+                            file_name=f"{inst}_{pg_type}_{chn}_revised.txt",
+                            mime="text/plain",
+                            key=f"download_button_revised_{ridx}"
+                        )
+
+            content_text = f"{institution} - {page_type}\n\n{content}"
+            st.download_button(
+                label="Download as Text",
+                data=content_text,
+                file_name=f"{institution}_{page_type}_{channel}.txt",
+                mime="text/plain",
+                key=f"download_button_{idx}"
+            )
+
+if __name__ == "__main__":
+    main()
