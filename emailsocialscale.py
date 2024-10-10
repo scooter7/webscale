@@ -223,7 +223,7 @@ def main():
             examples = read_github_files(file_urls)
 
             generated_pages = []
-            for _, row in csv_data.iterrows():
+            for idx, row in csv_data.iterrows():
                 institution = row["Institution"]
                 page_type = row["Type"]
                 channel = row["Channel"]  # New column for content channel
@@ -251,7 +251,7 @@ def main():
     if st.session_state.generated_pages:
         for idx, (institution, page_type, channel, content) in enumerate(st.session_state.generated_pages):
             st.subheader(f"{institution} - {page_type} ({channel})")
-            generated_content = st.text_area("Generated Content", content, height=300, key=f"generated_content_{idx}")
+            generated_content = st.text_area(f"Generated Content {idx}", content, height=300, key=f"generated_content_{idx}")
 
             revision_prompt = st.text_input(f"Provide revisions for {institution} - {page_type} ({channel})", key=f"revision_prompt_{idx}")
             if st.button(f"Revise Content {idx}", key=f"revise_button_{idx}"):
@@ -271,7 +271,7 @@ def main():
             if st.session_state.revised_pages:
                 for ridx, (inst, pg_type, chn, revised) in enumerate(st.session_state.revised_pages):
                     if institution == inst and page_type == pg_type and channel == chn:
-                        st.text_area(f"Revised Content for {inst} - {pg_type} ({chn})", revised, height=300, key=f"revised_content_{ridx}")
+                        st.text_area(f"Revised Content {ridx}", revised, height=300, key=f"revised_content_{idx}_{ridx}")
 
                         revised_content_text = f"{inst} - {pg_type}\n\n{revised}"
                         st.download_button(
@@ -279,7 +279,7 @@ def main():
                             data=revised_content_text,
                             file_name=f"{inst}_{pg_type}_{chn}_revised.txt",
                             mime="text/plain",
-                            key=f"download_button_revised_{ridx}"
+                            key=f"download_button_revised_{idx}_{ridx}"
                         )
 
             content_text = f"{institution} - {page_type}\n\n{content}"
