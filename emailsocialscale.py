@@ -65,7 +65,7 @@ serpapi_key = st.secrets["serpapi_api_key"]
 github_token = st.secrets["github_token"]
 
 placeholders = {
-    # Your detailed placeholders here, as before...
+    # placeholders dictionary from the previous code...
 }
 
 def get_github_files():
@@ -73,15 +73,12 @@ def get_github_files():
     headers = {"Authorization": f"token {github_token}"}
     response = requests.get(repo_url, headers=headers)
     
-    st.write(f"GitHub API response status: {response.status_code}")  # Debugging output
     if response.status_code == 200:
         files = response.json()
         text_files = [file['download_url'] for file in files if file['name'].endswith('.txt')]
-        st.write(f"Found {len(text_files)} text files in GitHub repository")  # Debugging output
         return text_files
     else:
         st.error(f"Failed to retrieve files from GitHub: {response.status_code}")
-        st.error(f"Response content: {response.text}")
         return []
 
 def read_github_files(file_urls):
@@ -93,8 +90,6 @@ def read_github_files(file_urls):
             examples.append(response.text)
         else:
             st.error(f"Failed to retrieve file: {url}")
-            st.error(f"Response content: {response.text}")
-    st.write(f"Read {len(examples)} examples from GitHub")  # Debugging output
     return examples
 
 def fetch_social_media_posts(institution_name, channel):
@@ -107,17 +102,14 @@ def fetch_social_media_posts(institution_name, channel):
     search = GoogleSearch(params)
     results = search.get_dict()
     
-    st.write(f"SerpAPI search query: {search_query}")  # Debugging output
     posts = []
     if 'organic_results' in results:
-        for result in results['organic_results'][:5]:  # Limit to top 5 results for now
+        for result in results['organic_results'][:5]:  # Limit to top 5 results
             posts.append(result['snippet'])
-        st.write(f"Found {len(posts)} posts from SerpAPI")  # Debugging output
 
     return " ".join(posts)
 
 def generate_content_with_examples(institution, page_type, channel, examples, facts, writing_styles, style_weights, keywords, audience, specific_facts_stats, min_chars, max_chars):
-    st.write(f"Generating content for {institution}, channel: {channel}, page_type: {page_type}")  # Debugging output
     examples_text = "\n\n".join(examples)
 
     if channel == "email":
@@ -149,27 +141,24 @@ def generate_content_with_examples(institution, page_type, channel, examples, fa
     if max_chars:
         prompt += f"\nMaximum Character Count: {max_chars}"
 
-    # Add writing style modifiers
     for i, style in enumerate(writing_styles):
         weight = style_weights[i]
         if weight > 0:
             style_name = style.split(' - ')[1]
             prompt += f"\nModify {weight}% of the content in a {style_name} manner."
 
-    st.write(f"Prompt being sent to OpenAI: {prompt}")  # Debugging output
     response = openai.ChatCompletion.create(model="gpt-4o-mini", messages=[{"role": "user", "content": prompt}])
     return response.choices[0].message["content"].strip()
 
 def main():
     if 'generated_pages' not in st.session_state:
         st.session_state.generated_pages = []
+        st.session_state.revised_pages = []  # For revisions
 
     uploaded_file = st.file_uploader("Upload CSV", type="csv")
 
     if uploaded_file and st.button("Generate Content"):
-        st.write("CSV file uploaded successfully.")  # Debugging output
         csv_data = pd.read_csv(uploaded_file)
-        st.write(f"CSV Data: {csv_data.head()}")  # Debugging output
 
         file_urls = get_github_files()
 
@@ -205,7 +194,29 @@ def main():
     if st.session_state.generated_pages:
         for idx, (institution, page_type, channel, content) in enumerate(st.session_state.generated_pages):
             st.subheader(f"{institution} - {page_type} ({channel})")
-            st.text_area("Generated Content", content, height=300)
+            generated_content = st.text_area("Generated Content", content, height=300, key=f"generated_content_{idx}")
+
+            # Revision prompt and button
+            revision_prompt = st.text_input(f"Provide revisions for {institution} - {page_type} ({channel})", key=f"revision_prompt_{idx}")
+            if st.button(f"Revise Content {idx}", key=f"revise_button_{idx}"):
+                if revision_prompt:
+                    # Generate revised content based on user input
+                    revision_response = openai.ChatCompletion.create(
+                        model="gpt-4o-mini",
+                        messages=[
+                            {"role": "system", "content": f"Revise the following content based on the user's feedback:\n\n{generated_content}"},
+                            {"role": "user", "content": revision_prompt}
+                        ]
+                    )
+                    revised_content = revision_response.choices[0].message["content"].strip()
+                    st.session_state.revised_pages.append((institution, page_type, channel, revised_content))
+                    st.write("Revision Complete!")
+            
+            # Show revisions if they exist
+            if st.session_state.revised_pages:
+                for ridx, (inst, pg_type, chn, revised) in enumerate(st.session_state.revised_pages):
+                    if institution == inst and page_type == pg_type and channel == chn:
+                        st.text_area(f"Revised Content for {inst} - {pg_type} ({chn})", revised, height=300, key=f"revised_content_{ridx}")
 
             content_text = f"{institution} - {page_type}\n\n{content}"
             st.download_button(
@@ -216,34 +227,7 @@ def main():
                 key=f"download_button_{idx}"
             )
 
-    # Adding the revision section here
-    st.markdown("---")
-    st.header("Revision Section")
-
-    with st.expander("Revision Fields"):
-        pasted_content = st.text_area("Paste Generated Content Here (for further revisions):")
-        revision_requests = st.text_area("Specify Revisions Here:")
-
-    if st.button("Revise Further"):
-        revision_messages = [
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": pasted_content},
-            {"role": "user", "content": revision_requests}
-        ]
-        response = openai.ChatCompletion.create(model="gpt-4o-mini", messages=revision_messages)
-        revised_content = response.choices[0].message["content"].strip()
-        st.text_area("Revised Content", revised_content, height=300)
-
-                st.download_button(
-            label="Download Revised Content",
-            data=revised_content,
-            file_name="revised_content.txt",
-            mime="text/plain",
-            key="download_revised_content"
-        )
-
     st.markdown('</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
-
