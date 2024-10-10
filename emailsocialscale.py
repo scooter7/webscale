@@ -241,42 +241,44 @@ def main():
             st.error("Failed to retrieve example files from GitHub.")
 
     if st.session_state.generated_pages:
-        for idx, (institution, page_type, channel, content) in enumerate(st.session_state.generated_pages):
-            st.subheader(f"{institution} - {page_type} ({channel})")
-            generated_content = st.text_area("Generated Content", content, height=300, key=f"generated_content_{idx}")
+    for idx, (institution, page_type, channel, content) in enumerate(st.session_state.generated_pages):
+        st.subheader(f"{institution} - {page_type} ({channel})")
+        generated_content = st.text_area("Generated Content", content, height=300, key=f"generated_content_{idx}")
 
-            # Revision prompt and button
-            revision_prompt = st.text_input(f"Provide revisions for {institution} - {page_type} ({channel})", key=f"revision_prompt_{idx}")
-            if st.button(f"Revise Content {idx}", key=f"revise_button_{idx}"):
-                if revision_prompt:
-                    # Generate revised content based on user input
-                    revision_response = openai.ChatCompletion.create(
-                        model="gpt-4o-mini",
-                        messages=[
-                            {"role": "system", "content": f"Revise the following content based on the user's feedback:\n\n{generated_content}"},
-                            {"role": "user", "content": revision_prompt}
-                        ]
+        revision_prompt = st.text_input(f"Provide revisions for {institution} - {page_type} ({channel})", key=f"revision_prompt_{idx}")
+        if st.button(f"Revise Content {idx}", key=f"revise_button_{idx}"):
+            if revision_prompt:
+                # Generate revised content based on user input
+                revision_response = openai.ChatCompletion.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": f"Revise the following content based on the user's feedback:\n\n{generated_content}"},
+                        {"role": "user", "content": revision_prompt}
+                    ]
+                )
+                revised_content = revision_response.choices[0].message["content"].strip()
+                st.session_state.revised_pages.append((institution, page_type, channel, revised_content))
+                st.write("Revision Complete!")
+        
+        if st.session_state.revised_pages:
+            for ridx, (inst, pg_type, chn, revised) in enumerate(st.session_state.revised_pages):
+                if institution == inst and page_type == pg_type and channel == chn:
+                    st.text_area(f"Revised Content for {inst} - {pg_type} ({chn})", revised, height=300, key=f"revised_content_{ridx}")
+
+                    revised_content_text = f"{inst} - {pg_type}\n\n{revised}"
+                    st.download_button(
+                        label="Download Revised Content as Text",
+                        data=revised_content_text,
+                        file_name=f"{inst}_{pg_type}_{chn}_revised.txt",
+                        mime="text/plain",
+                        key=f"download_button_revised_{ridx}"
                     )
-                    revised_content = revision_response.choices[0].message["content"].strip()
-                    st.session_state.revised_pages.append((institution, page_type, channel, revised_content))
-                    st.write("Revision Complete!")
-            
-            # Show revisions if they exist
-            if st.session_state.revised_pages:
-                for ridx, (inst, pg_type, chn, revised) in enumerate(st.session_state.revised_pages):
-                    if institution == inst and page_type == pg_type and channel == chn:
-                        st.text_area(f"Revised Content for {inst} - {pg_type} ({chn})", revised, height=300, key=f"revised_content_{ridx}")
 
-            content_text = f"{institution} - {page_type}\n\n{content}"
-            st.download_button(
-                label="Download as Text",
-                data=content_text,
-                file_name=f"{institution}_{page_type}_{channel}.txt",
-                mime="text/plain",
-                key=f"download_button_{idx}"
-            )
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-if __name__ == "__main__":
-    main()
+        content_text = f"{institution} - {page_type}\n\n{content}"
+        st.download_button(
+            label="Download as Text",
+            data=content_text,
+            file_name=f"{institution}_{page_type}_{channel}.txt",
+            mime="text/plain",
+            key=f"download_button_{idx}"
+        )
