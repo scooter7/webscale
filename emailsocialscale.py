@@ -241,7 +241,7 @@ def main():
             st.error("Failed to retrieve example files from GitHub.")
 
     if st.session_state.generated_pages:
-    for idx, (institution, page_type, channel, content) in enumerate(st.session_state.generated_pages):
+        for idx, (institution, page_type, channel, content) in enumerate(st.session_state.generated_pages):
         st.subheader(f"{institution} - {page_type} ({channel})")
         generated_content = st.text_area("Generated Content", content, height=300, key=f"generated_content_{idx}")
 
