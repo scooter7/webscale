@@ -52,7 +52,7 @@ st.markdown(
 st.markdown(
     """
     <div class="logo-container">
-        <img src="https://banner2.cleanpng.com/20180517/jsq/kisspng-college-of-idaho-boise-state-university-northwest-5afd58a92a1a18.0846885315265527451725.jpg" alt="Logo">
+        <img src="https://www.collegeofidaho.edu/sites/default/files/styles/event_news_teaser/public/2020-03/Logo.jpg" alt="Logo">
     </div>
     """,
     unsafe_allow_html=True
