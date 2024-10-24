@@ -52,7 +52,7 @@ st.markdown(
 st.markdown(
     """
     <div class="logo-container">
-        <img src="https://www.bc.edu/etc/designs/bc-web/images/logo.png" alt="Logo">
+        <img src="https://i.pinimg.com/736x/a3/c2/4d/a3c24da89cd3aa758e4b8b3bafbe2267.jpg" alt="Logo">
     </div>
     """,
     unsafe_allow_html=True
