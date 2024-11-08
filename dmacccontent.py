@@ -52,7 +52,7 @@ st.markdown(
 st.markdown(
     """
     <div class="logo-container">
-        <img src="https://www.dmacc.edu/news/images/20231030.jpg" alt="Logo">
+        <img src="https://media.freemalaysiatoday.com/wp-content/uploads/2023/12/6a15ae07-ai-freepik.jpg" alt="Logo">
     </div>
     """,
     unsafe_allow_html=True
