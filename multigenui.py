@@ -43,6 +43,7 @@ st.markdown('<div class="app-container">', unsafe_allow_html=True)
 
 # Color placeholders
 placeholders = {
+placeholders = {
     "Purple - caring, encouraging": {
         "verbs": ["assist", "befriend", "care", "empower"],
         "adjectives": ["caring", "encouraging", "compassionate"],
@@ -174,7 +175,7 @@ if active_tab == "Create Content":
             content_type = request.get("content_type", "General")
             generated_content = generate_content(request, content_type)
             st.session_state.generated_contents.append(
-                {"Request": idx + 1, "Generated": generated_content}
+                {"Request": idx + 1, "Content": generated_content}
             )
         st.success("Content generation completed! Navigate to the 'Generated Content' tab to view and download your results.")
 
@@ -182,9 +183,11 @@ elif active_tab == "Generated Content":
     st.subheader("Generated Content")
     if st.session_state.generated_contents:
         for idx, content_data in enumerate(st.session_state.generated_contents):
-            generated = content_data["Generated"]
-            if generated["type"] == "Email":
-                email_content = generated["content"]
+            content = content_data.get("Content", {})
+            content_type = content.get("type", "General")
+
+            if content_type == "Email":
+                email_content = content["content"]
                 ui.card(
                     title=f"Generated Email {content_data['Request']}",
                     content=f"""
@@ -200,7 +203,7 @@ elif active_tab == "Generated Content":
                     f"email_{content_data['Request']}.txt",
                 )
             else:
-                general_content = generated["content"]
+                general_content = content["content"]
                 ui.card(
                     title=f"Generated Content {content_data['Request']}",
                     content=f"<div>{general_content}</div>",
