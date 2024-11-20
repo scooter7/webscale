@@ -146,6 +146,27 @@ def generate_content(request):
     )
     return response["choices"][0]["message"]["content"].strip()
 
+def generate_revised_content(original_content, revision_request):
+    """
+    Generate revised content using OpenAI based on the provided revision instructions.
+    """
+    prompt = f"""
+    Please revise the following content based on the described revision request:
+    
+    Original Content:
+    {original_content}
+    
+    Revision Request:
+    {revision_request}
+    """
+
+    # Call OpenAI to generate the revised content
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return response["choices"][0]["message"]["content"].strip()
+
 def download_content(content, filename):
     st.download_button(
         label="Download Content",
@@ -223,9 +244,10 @@ elif active_tab == "Generated Content":
 
 elif active_tab == "Revisions":
     st.subheader("Make Revisions")
-    revision_body = textarea(default_value="", placeholder="Enter revised content...", key="revision_body")
+    original_content = textarea(default_value="", placeholder="Paste content to revise...", key="revision_content")
+    revision_request = textarea(default_value="", placeholder="Describe the revisions needed...", key="revision_request")
     if button(text="Revise Content", key="revise"):
-        revised_content = f"Revised Content:\n\n{revision_body}"
+        revised_content = generate_revised_content(original_content, revision_request)
         ui.card(
             title="Revised Content",
             content=f"<div>{revised_content}</div>",
