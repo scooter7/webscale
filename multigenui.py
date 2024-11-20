@@ -43,6 +43,7 @@ st.markdown('<div class="app-container">', unsafe_allow_html=True)
 
 # Color placeholders
 placeholders = {
+placeholders = {
     "Purple - caring, encouraging": {
         "verbs": ["assist", "befriend", "care", "empower"],
         "adjectives": ["caring", "encouraging", "compassionate"],
@@ -102,7 +103,7 @@ if "generated_contents" not in st.session_state:
 
 def generate_content(request):
     """
-    Generate content based on the user input fields.
+    Generate actual content using OpenAI based on the form inputs.
     """
     user_prompt = request.get("user_prompt", "")
     keywords = request.get("keywords", "")
@@ -115,34 +116,36 @@ def generate_content(request):
     writing_styles = request.get("writing_styles", [])
     style_weights = request.get("style_weights", [])
 
-    # Incorporate writing styles and weights
-    style_descriptions = []
-    for style, weight in zip(writing_styles, style_weights):
-        attributes = placeholders.get(style, {})
-        verbs = ", ".join(attributes.get("verbs", [])[:3])
-        adjectives = ", ".join(attributes.get("adjectives", [])[:3])
-        beliefs = "; ".join(attributes.get("beliefs", [])[:1])
-        style_descriptions.append(
-            f"Style: {style} ({weight}% weight). Verbs: {verbs}, Adjectives: {adjectives}, Beliefs: {beliefs}."
-        )
+    # Create a prompt for the OpenAI model
+    styles_description = "\n".join(
+        f"Style: {style} ({weight}% weight)"
+        for style, weight in zip(writing_styles, style_weights)
+    )
 
-    styles_description = "\n".join(style_descriptions)
-
-    return f"""
-    Prompt: {user_prompt}
+    prompt = f"""
+    You are an expert content creator. Please generate content based on the following inputs:
     
+    Prompt: {user_prompt}
     Keywords: {keywords}
     Audience: {audience}
     Specific Facts/Stats: {specific_facts_stats}
     Call to Action: {call_to_action}
     Minimum Characters: {min_chars}
     Maximum Characters: {max_chars}
-    
     User Content: {user_content}
     
     Writing Styles and Weights:
     {styles_description}
+    
+    Ensure the content is engaging, concise, and tailored to the audience described.
     """
+
+    # Call OpenAI to generate content
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return response["choices"][0]["message"]["content"].strip()
 
 def download_content(content, filename):
     st.download_button(
