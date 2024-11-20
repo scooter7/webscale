@@ -65,6 +65,8 @@ placeholders = {
 
 if "content_requests" not in st.session_state:
     st.session_state.content_requests = []
+if "rerun" not in st.session_state:
+    st.session_state.rerun = False
 
 def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats, min_chars, max_chars):
     full_prompt = user_prompt
@@ -109,11 +111,15 @@ def content_request_form(index):
             keywords, audience, specific_facts_stats, min_chars, max_chars
         )
         st.session_state.content_requests.append({"index": index, "content": generated_content})
-        st.experimental_rerun()
+        st.session_state.rerun = True
 
 def main():
     st.title("AI Content Generator with Multiple Requests")
     st.markdown("---")
+
+    if st.session_state.rerun:
+        st.session_state.rerun = False
+        st.experimental_set_query_params()
 
     for i in range(len(st.session_state.content_requests) + 1):
         content_request_form(i)
