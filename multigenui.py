@@ -72,12 +72,12 @@ if active_tab == "Create Content":
     st.subheader("Create Content Requests")
 
     num_requests = input(
-        default_value="1",
-        type="number",
-        placeholder="How many pieces of content to create?",
-        label="Number of Requests",
-        key="num_requests",
-    )
+    default_value="1",
+    type="number",
+    placeholder="How many pieces of content to create?",
+    key="num_requests",
+)
+
     if button(text="Generate Form", key="generate_form"):
         st.session_state.content_requests = [{} for _ in range(int(num_requests))]
 
