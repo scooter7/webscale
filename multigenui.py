@@ -159,6 +159,22 @@ def main():
                 key=f"download_{idx}"
             )
 
+    st.markdown("---")
+    st.header("Revision Section")
+    with st.expander("Revision Fields"):
+        pasted_content = st.text_area("Paste Generated Content Here (for further revisions):", key="pasted_revision")
+        revision_requests = st.text_area("Specify Revisions Here:", key="revision_requests")
+    if st.button("Revise Further"):
+        revision_messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": pasted_content},
+            {"role": "user", "content": revision_requests}
+        ]
+        response = openai.ChatCompletion.create(model="gpt-4o-mini", messages=revision_messages)
+        revised_content = response.choices[0].message["content"].strip()
+        st.text(revised_content)
+        st.download_button("Download Revised Content", revised_content, "revised_content_revision.txt", key="download_revised_content")
+
     st.markdown('</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
