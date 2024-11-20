@@ -100,32 +100,40 @@ if "content_requests" not in st.session_state:
 if "generated_contents" not in st.session_state:
     st.session_state.generated_contents = []
 
-def generate_email(subject, body, signature, writing_style, weight):
+def generate_content(request, content_type):
+    """
+    Generate content based on request details and type.
+    """
+    subject = request.get("subject", "")
+    body = request.get("body", "")
+    signature = request.get("signature", "")
+    writing_style = request.get("writing_style", "General")
+    weight = request.get("weight", 0)
+    
     style_data = placeholders.get(writing_style, {})
     verbs = ", ".join(style_data.get("verbs", [])[:3])
     adjectives = ", ".join(style_data.get("adjectives", [])[:3])
     beliefs = "; ".join(style_data.get("beliefs", [])[:1])
 
-    email_content = f"""
-    Subject: {subject}
+    if content_type == "Email":
+        return {
+            "type": "Email",
+            "content": {
+                "subject": subject,
+                "body": f"{body}\n\nVerbs: {verbs}, Adjectives: {adjectives}, Beliefs: {beliefs} ({weight}%).",
+                "signature": signature,
+            },
+        }
+    else:
+        return {
+            "type": "General",
+            "content": f"Subject: {subject}\n\n{body}\n\nSignature: {signature}\n\nStyle: {writing_style} with {weight}% emphasis.\nVerbs: {verbs}, Adjectives: {adjectives}, Beliefs: {beliefs}.",
+        }
 
-    {body}
-
-    Verbs ({verbs}), Adjectives ({adjectives}), Beliefs ({beliefs}) included in {weight}% of the content.
-
-    {signature}
-    """
-    return {
-        "subject": subject,
-        "body": email_content,
-        "signature": signature,
-    }
-
-def download_email(email_data, filename):
-    email_text = f"Subject: {email_data['subject']}\n\n{email_data['body']}\n\n{email_data['signature']}"
+def download_content(content, filename):
     st.download_button(
-        label="Download Email",
-        data=email_text,
+        label="Download Content",
+        data=content,
         file_name=filename,
         mime="text/plain",
     )
@@ -146,30 +154,27 @@ if active_tab == "Create Content":
     if st.session_state.content_requests:
         for idx, _ in enumerate(st.session_state.content_requests):
             st.markdown(f"### Content Request {idx + 1}")
-            subject = input(default_value="", placeholder="Enter email subject...", key=f"subject_{idx}")
-            body = textarea(default_value="", placeholder="Enter email body content...", key=f"body_{idx}")
-            signature = textarea(default_value="", placeholder="Enter email signature...", key=f"signature_{idx}")
+            subject = input(default_value="", placeholder="Enter subject (if applicable)...", key=f"subject_{idx}")
+            body = textarea(default_value="", placeholder="Enter content body...", key=f"body_{idx}")
+            signature = textarea(default_value="", placeholder="Enter signature (if applicable)...", key=f"signature_{idx}")
+            content_type = st.selectbox("Select content type", ["Email", "General"], key=f"type_{idx}")
             writing_style = st.selectbox("Choose a writing style", options=list(placeholders.keys()), key=f"style_{idx}")
             weight = st.slider("Style weight percentage", min_value=0, max_value=100, value=50, step=5, key=f"weight_{idx}")
             st.session_state.content_requests[idx] = {
                 "subject": subject,
                 "body": body,
                 "signature": signature,
+                "content_type": content_type,
                 "writing_style": writing_style,
                 "weight": weight,
             }
     if button(text="Generate All Content", key="generate_all"):
         st.session_state.generated_contents = []
         for idx, request in enumerate(st.session_state.content_requests):
-            generated_email = generate_email(
-                request["subject"],
-                request["body"],
-                request["signature"],
-                request["writing_style"],
-                request["weight"],
-            )
+            content_type = request.get("content_type", "General")
+            generated_content = generate_content(request, content_type)
             st.session_state.generated_contents.append(
-                {"Request": idx + 1, "Email": generated_email}
+                {"Request": idx + 1, "Generated": generated_content}
             )
         st.success("Content generation completed! Navigate to the 'Generated Content' tab to view and download your results.")
 
@@ -177,48 +182,51 @@ elif active_tab == "Generated Content":
     st.subheader("Generated Content")
     if st.session_state.generated_contents:
         for idx, content_data in enumerate(st.session_state.generated_contents):
-            email_data = content_data["Email"]
-            ui.card(
-                title=f"Generated Email {content_data['Request']}",
-                content=f"""
-                    <div style="margin-bottom: 10px;"><strong>Subject:</strong> {email_data['subject']}</div>
-                    <div style="margin-bottom: 10px;">{email_data['body']}</div>
-                    <div><em>{email_data['signature']}</em></div>
-                """,
-                description="Generated based on user input.",
-                key=f"card_{idx}",
-            ).render()
-
-            download_email(email_data, f"email_{content_data['Request']}.txt")
+            generated = content_data["Generated"]
+            if generated["type"] == "Email":
+                email_content = generated["content"]
+                ui.card(
+                    title=f"Generated Email {content_data['Request']}",
+                    content=f"""
+                        <div><strong>Subject:</strong> {email_content['subject']}</div>
+                        <div>{email_content['body']}</div>
+                        <div><em>{email_content['signature']}</em></div>
+                    """,
+                    description="Generated email content",
+                    key=f"card_email_{idx}",
+                ).render()
+                download_content(
+                    f"Subject: {email_content['subject']}\n\n{email_content['body']}\n\n{email_content['signature']}",
+                    f"email_{content_data['Request']}.txt",
+                )
+            else:
+                general_content = generated["content"]
+                ui.card(
+                    title=f"Generated Content {content_data['Request']}",
+                    content=f"<div>{general_content}</div>",
+                    description="General content generated",
+                    key=f"card_general_{idx}",
+                ).render()
+                download_content(
+                    general_content,
+                    f"content_{content_data['Request']}.txt",
+                )
     else:
         st.info("No content generated yet. Go to 'Create Content' to generate content.")
 
 elif active_tab == "Revisions":
     st.subheader("Make Revisions")
-    revision_subject = input(default_value="", placeholder="Enter revised subject...", key="revision_subject")
     revision_body = textarea(default_value="", placeholder="Enter revised body...", key="revision_body")
-    revision_signature = textarea(default_value="", placeholder="Enter revised signature...", key="revision_signature")
-    revision_style = st.selectbox("Choose a writing style for revision", options=list(placeholders.keys()), key="revision_style")
-    revision_weight = st.slider("Style weight percentage for revision", min_value=0, max_value=100, value=50, step=5, key="revision_weight")
+    revision_type = st.selectbox("Select content type for revision", ["Email", "General"], key="revision_type")
     if button(text="Revise Content", key="revise"):
-        revised_email = generate_email(
-            revision_subject,
-            revision_body,
-            revision_signature,
-            revision_style,
-            revision_weight,
-        )
+        revised_content = generate_content({"body": revision_body}, revision_type)
+        content_text = revised_content["content"] if revision_type == "General" else f"Subject: {revised_content['content']['subject']}\n\n{revised_content['content']['body']}\n\n{revised_content['content']['signature']}"
         ui.card(
-            title="Revised Email",
-            content=f"""
-                <div style="margin-bottom: 10px;"><strong>Subject:</strong> {revised_email['subject']}</div>
-                <div style="margin-bottom: 10px;">{revised_email['body']}</div>
-                <div><em>{revised_email['signature']}</em></div>
-            """,
-            description="Updated based on your revision input.",
+            title="Revised Content",
+            content=f"<div>{content_text}</div>",
+            description="Revised content based on input",
             key="revised_card",
         ).render()
-
-        download_email(revised_email, "revised_email.txt")
+        download_content(content_text, "revised_content.txt")
 
 st.markdown('</div>', unsafe_allow_html=True)
