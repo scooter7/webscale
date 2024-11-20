@@ -13,7 +13,7 @@ st.markdown(
         margin-bottom: 20px;
     }
     .logo-container img {
-        width: 600px;
+        width: 300px;
     }
     .app-container {
         border-left: 5px solid #58258b;
@@ -40,7 +40,7 @@ st.markdown(
 st.markdown(
     """
     <div class="logo-container">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/East_Carolina_University.svg/1280px-East_Carolina_University.svg.png" alt="Logo">
+        <img src="https://seeklogo.com/images/E/east-carolina-university-logo-D87F964E5D-seeklogo.com.png" alt="Logo">
     </div>
     """,
     unsafe_allow_html=True
