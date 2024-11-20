@@ -1,6 +1,6 @@
 import streamlit as st
 import streamlit_shadcn_ui as ui
-from streamlit_shadcn_ui import input, textarea, slider, button, tabs, table, card
+from streamlit_shadcn_ui import input, textarea, slider, button, tabs, multiselect, card
 import openai
 
 st.markdown(
@@ -57,10 +57,30 @@ if "content_requests" not in st.session_state:
 if "generated_contents" not in st.session_state:
     st.session_state.generated_contents = []
 
-def generate_article(content, user_prompt, call_to_action):
-    prompt = f"{user_prompt}\n\nCall to Action: {call_to_action}\n\nContent:\n{content}"
+def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats, min_chars, max_chars, call_to_action):
+    full_prompt = user_prompt
+    if keywords:
+        full_prompt += f"\nKeywords: {keywords}"
+    if audience:
+        full_prompt += f"\nAudience: {audience}"
+    if specific_facts_stats:
+        full_prompt += f"\nFacts/Stats: {specific_facts_stats}"
+    if call_to_action:
+        full_prompt += f"\nCall to Action: {call_to_action}"
+    if min_chars:
+        full_prompt += f"\nMinimum Character Count: {min_chars}"
+    if max_chars:
+        full_prompt += f"\nMaximum Character Count: {max_chars}"
+    for i, style in enumerate(writing_styles):
+        weight = style_weights[i]
+        attributes = placeholders[style]
+        verbs = ", ".join(attributes["verbs"][:3])
+        adjectives = ", ".join(attributes["adjectives"][:3])
+        beliefs = "; ".join(attributes["beliefs"][:1])
+        full_prompt += f"\nStyle: {style} - Incorporate verbs ({verbs}), adjectives ({adjectives}), and beliefs ({beliefs}) in {weight}% of the content."
     messages = [{"role": "system", "content": "You are a helpful assistant."}]
-    messages.append({"role": "user", "content": prompt})
+    messages.append({"role": "user", "content": content})
+    messages.append({"role": "user", "content": full_prompt})
     response = openai.ChatCompletion.create(model="gpt-4o-mini", messages=messages)
     return response.choices[0].message["content"].strip()
 
@@ -71,11 +91,10 @@ active_tab = tabs(options=tabs_options, default_value="Create Content", key="mai
 if active_tab == "Create Content":
     st.subheader("Create Content Requests")
 
-    st.markdown("### How many pieces of content do you want to create?")
     num_requests = input(
         default_value="1",
         type="number",
-        placeholder="Enter number of content pieces",
+        placeholder="How many pieces of content to create?",
         key="num_requests",
     )
 
@@ -87,37 +106,91 @@ if active_tab == "Create Content":
             st.markdown(f"### Content Request {idx + 1}")
 
             # Input fields using Shadcn components
-            st.markdown(f"#### Prompt for Request {idx + 1}")
             prompt = textarea(
                 default_value="",
                 placeholder="Enter your prompt...",
                 key=f"prompt_{idx}",
             )
-            st.markdown(f"#### Call to Action for Request {idx + 1}")
+            keywords = textarea(
+                default_value="",
+                placeholder="Enter optional keywords...",
+                key=f"keywords_{idx}",
+            )
+            audience = input(
+                default_value="",
+                placeholder="Define the audience...",
+                key=f"audience_{idx}",
+            )
+            specific_facts_stats = textarea(
+                default_value="",
+                placeholder="Enter specific facts/stats...",
+                key=f"facts_{idx}",
+            )
             call_to_action = input(
                 default_value="",
-                placeholder="Enter call to action...",
+                placeholder="Enter a call to action...",
                 key=f"cta_{idx}",
             )
-            st.markdown(f"#### Existing Content for Request {idx + 1}")
-            content = textarea(
+            user_content = textarea(
                 default_value="",
-                placeholder="Paste any existing content (if modifying)...",
+                placeholder="Paste existing content (if modifying)...",
                 key=f"content_{idx}",
             )
+            min_chars = input(
+                default_value="",
+                placeholder="Enter minimum character count...",
+                key=f"min_chars_{idx}",
+            )
+            max_chars = input(
+                default_value="",
+                placeholder="Enter maximum character count...",
+                key=f"max_chars_{idx}",
+            )
+            writing_styles = multiselect(
+                default_value=[],
+                options=list(placeholders.keys()),
+                placeholder="Select writing styles...",
+                key=f"styles_{idx}",
+            )
+            style_weights = [
+                slider(
+                    default_value=50,
+                    min_value=0,
+                    max_value=100,
+                    step=1,
+                    key=f"weight_{idx}_{style}",
+                )
+                for style in writing_styles
+            ]
 
             # Save request data
             st.session_state.content_requests[idx] = {
                 "prompt": prompt,
+                "keywords": keywords,
+                "audience": audience,
+                "specific_facts_stats": specific_facts_stats,
                 "call_to_action": call_to_action,
-                "content": content,
+                "user_content": user_content,
+                "min_chars": min_chars,
+                "max_chars": max_chars,
+                "writing_styles": writing_styles,
+                "style_weights": style_weights,
             }
 
     if button(text="Generate All Content", key="generate_all"):
         st.session_state.generated_contents = []
         for idx, request in enumerate(st.session_state.content_requests):
             generated_content = generate_article(
-                request["content"], request["prompt"], request["call_to_action"]
+                request["user_content"],
+                request["writing_styles"],
+                request["style_weights"],
+                request["prompt"],
+                request["keywords"],
+                request["audience"],
+                request["specific_facts_stats"],
+                request["min_chars"],
+                request["max_chars"],
+                request["call_to_action"],
             )
             st.session_state.generated_contents.append(
                 {"Request": idx + 1, "Content": generated_content}
@@ -138,13 +211,11 @@ elif active_tab == "Generated Content":
 elif active_tab == "Revisions":
     st.subheader("Make Revisions")
 
-    st.markdown("#### Paste the Generated Content to Revise")
     revision_content = textarea(
         default_value="",
         placeholder="Paste the generated content to revise...",
         key="revision_content",
     )
-    st.markdown("#### Describe Your Revision Requests")
     revision_request = textarea(
         default_value="",
         placeholder="Describe your revision requests...",
