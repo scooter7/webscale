@@ -63,10 +63,10 @@ placeholders = {
     "Beige - dedicated, humble": {"verbs": ["dedicate", "humble", "collaborate"], "adjectives": ["dedicated", "humble"], "beliefs": ["There’s no need to differentiate from others"]},
 }
 
-if "num_requests" not in st.session_state:
-    st.session_state.num_requests = 0
 if "content_requests" not in st.session_state:
     st.session_state.content_requests = []
+if "generated_contents" not in st.session_state:
+    st.session_state.generated_contents = []
 
 def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats, min_chars, max_chars):
     full_prompt = user_prompt
@@ -120,38 +120,32 @@ def main():
     st.title("AI Content Generator with Multiple Requests")
     st.markdown("---")
 
-    st.header("Step 1: Define Number of Content Requests")
-    num_requests = st.number_input("How many pieces of content do you want to create?", min_value=1, max_value=20, step=1, key="num_requests")
-
-    if st.button("Generate Content Forms"):
-        st.session_state.num_requests = num_requests
+    num_requests = st.number_input("How many pieces of content do you want to create?", min_value=1, max_value=20, step=1)
+    if len(st.session_state.content_requests) != num_requests:
         st.session_state.content_requests = [{} for _ in range(num_requests)]
 
-    if st.session_state.num_requests > 0:
-        st.markdown("---")
-        st.header("Step 2: Enter Content Details")
-        for i in range(st.session_state.num_requests):
-            st.session_state.content_requests[i] = content_request_form(i)
+    st.markdown("---")
+    st.header("Step 2: Enter Content Details")
+    for i in range(num_requests):
+        st.session_state.content_requests[i] = content_request_form(i)
 
-        if st.button("Generate All Content"):
-            generated_contents = []
-            for i, request in enumerate(st.session_state.content_requests):
-                content = generate_article(
-                    request["user_content"],
-                    request["writing_styles"],
-                    request["style_weights"],
-                    request["user_prompt"],
-                    request["keywords"],
-                    request["audience"],
-                    request["specific_facts_stats"],
-                    request["min_chars"],
-                    request["max_chars"],
-                )
-                generated_contents.append((i + 1, content))
+    if st.button("Generate All Content"):
+        st.session_state.generated_contents = []
+        for i, request in enumerate(st.session_state.content_requests):
+            content = generate_article(
+                request["user_content"],
+                request["writing_styles"],
+                request["style_weights"],
+                request["user_prompt"],
+                request["keywords"],
+                request["audience"],
+                request["specific_facts_stats"],
+                request["min_chars"],
+                request["max_chars"],
+            )
+            st.session_state.generated_contents.append((i + 1, content))
 
-            st.session_state.generated_contents = generated_contents
-
-    if "generated_contents" in st.session_state and st.session_state.generated_contents:
+    if st.session_state.generated_contents:
         st.markdown("---")
         st.header("Generated Content")
         for idx, content in st.session_state.generated_contents:
