@@ -196,9 +196,12 @@ if active_tab == "Create Content":
                 request["max_chars"],
                 request["call_to_action"],
             )
+            # Append generated content to session state
             st.session_state.generated_contents.append(
                 {"Request": idx + 1, "Content": generated_content}
             )
+            # Debug log for generated content
+            st.write(f"Debug: Content for Request {idx + 1} generated successfully.")
 
         # Show success notification and feedback
         st.success("Content generation completed! Navigate to the 'Generated Content' tab to view and download your results.")
@@ -215,6 +218,8 @@ elif active_tab == "Generated Content":
                 description="Generated based on user input.",
                 key=f"card_{idx}",
             )
+    else:
+        st.info("No content generated yet. Go to 'Create Content' to generate content.")
 
 elif active_tab == "Revisions":
     st.subheader("Make Revisions")
