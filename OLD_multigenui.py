@@ -65,8 +65,8 @@ placeholders = {
 
 if "content_requests" not in st.session_state:
     st.session_state.content_requests = []
-if "rerun" not in st.session_state:
-    st.session_state.rerun = False
+if "generated_contents" not in st.session_state:
+    st.session_state.generated_contents = []
 
 def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats, min_chars, max_chars):
     full_prompt = user_prompt
@@ -104,38 +104,60 @@ def content_request_form(index):
     max_chars = st.text_input(f"Maximum Character Count for Request {index + 1}:", key=f"max_chars_{index}")
     writing_styles = st.multiselect(f"Select Writing Styles for Request {index + 1}:", list(placeholders.keys()), key=f"styles_{index}")
     style_weights = [st.slider(f"Weight for {style} (Request {index + 1}):", 0, 100, 50, key=f"weight_{index}_{style}") for style in writing_styles]
-
-    if st.button(f"Generate Content for Request {index + 1}", key=f"generate_{index}"):
-        generated_content = generate_article(
-            user_content, writing_styles, style_weights, user_prompt, 
-            keywords, audience, specific_facts_stats, min_chars, max_chars
-        )
-        st.session_state.content_requests.append({"index": index, "content": generated_content})
-        st.session_state.rerun = True
+    return {
+        "user_prompt": user_prompt,
+        "keywords": keywords,
+        "audience": audience,
+        "specific_facts_stats": specific_facts_stats,
+        "user_content": user_content,
+        "min_chars": min_chars,
+        "max_chars": max_chars,
+        "writing_styles": writing_styles,
+        "style_weights": style_weights,
+    }
 
 def main():
     st.title("AI Content Generator with Multiple Requests")
     st.markdown("---")
 
-    if st.session_state.rerun:
-        st.session_state.rerun = False
-        st.experimental_set_query_params()
-
-    for i in range(len(st.session_state.content_requests) + 1):
-        content_request_form(i)
+    num_requests = st.number_input("How many pieces of content do you want to create?", min_value=1, max_value=20, step=1)
+    if len(st.session_state.content_requests) != num_requests:
+        st.session_state.content_requests = [{} for _ in range(num_requests)]
 
     st.markdown("---")
-    st.header("Generated Content")
-    for request in st.session_state.content_requests:
-        st.subheader(f"Request {request['index'] + 1}")
-        st.text_area(f"Generated Content for Request {request['index'] + 1}", request['content'], height=300, key=f"generated_{request['index']}")
-        st.download_button(
-            label=f"Download Content for Request {request['index'] + 1}",
-            data=request['content'],
-            file_name=f"generated_content_request_{request['index'] + 1}.txt",
-            mime="text/plain",
-            key=f"download_{request['index']}"
-        )
+    st.header("Step 2: Enter Content Details")
+    for i in range(num_requests):
+        st.session_state.content_requests[i] = content_request_form(i)
+
+    if st.button("Generate All Content"):
+        st.session_state.generated_contents = []
+        for i, request in enumerate(st.session_state.content_requests):
+            content = generate_article(
+                request["user_content"],
+                request["writing_styles"],
+                request["style_weights"],
+                request["user_prompt"],
+                request["keywords"],
+                request["audience"],
+                request["specific_facts_stats"],
+                request["min_chars"],
+                request["max_chars"],
+            )
+            st.session_state.generated_contents.append((i + 1, content))
+
+    if st.session_state.generated_contents:
+        st.markdown("---")
+        st.header("Generated Content")
+        for idx, content in st.session_state.generated_contents:
+            st.subheader(f"Content Request {idx}")
+            st.text_area(f"Generated Content for Request {idx}", content, height=300, key=f"generated_{idx}")
+            st.download_button(
+                label=f"Download Content for Request {idx}",
+                data=content,
+                file_name=f"generated_content_request_{idx}.txt",
+                mime="text/plain",
+                key=f"download_{idx}"
+            )
 
     st.markdown("---")
     st.header("Revision Section")
