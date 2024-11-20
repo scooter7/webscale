@@ -68,7 +68,7 @@ if "content_requests" not in st.session_state:
 if "generated_contents" not in st.session_state:
     st.session_state.generated_contents = []
 
-def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats, min_chars, max_chars):
+def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats, min_chars, max_chars, call_to_action):
     full_prompt = user_prompt
     if keywords:
         full_prompt += f"\nKeywords: {keywords}"
@@ -76,6 +76,8 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
         full_prompt += f"\nAudience: {audience}"
     if specific_facts_stats:
         full_prompt += f"\nFacts/Stats: {specific_facts_stats}"
+    if call_to_action:
+        full_prompt += f"\nCall to Action: {call_to_action}"
     if min_chars:
         full_prompt += f"\nMinimum Character Count: {min_chars}"
     if max_chars:
@@ -99,6 +101,7 @@ def content_request_form(index):
     keywords = st.text_area(f"Optional Keywords for Request {index + 1}:", key=f"keywords_{index}")
     audience = st.text_input(f"Define Audience for Request {index + 1}:", key=f"audience_{index}")
     specific_facts_stats = st.text_area(f"Specific Facts/Stats for Request {index + 1}:", key=f"facts_{index}")
+    call_to_action = st.text_input(f"Optional Call to Action for Request {index + 1}:", key=f"cta_{index}")
     user_content = st.text_area(f"Paste Existing Content (if modifying) for Request {index + 1}:", key=f"content_{index}")
     min_chars = st.text_input(f"Minimum Character Count for Request {index + 1}:", key=f"min_chars_{index}")
     max_chars = st.text_input(f"Maximum Character Count for Request {index + 1}:", key=f"max_chars_{index}")
@@ -109,6 +112,7 @@ def content_request_form(index):
         "keywords": keywords,
         "audience": audience,
         "specific_facts_stats": specific_facts_stats,
+        "call_to_action": call_to_action,
         "user_content": user_content,
         "min_chars": min_chars,
         "max_chars": max_chars,
@@ -142,6 +146,7 @@ def main():
                 request["specific_facts_stats"],
                 request["min_chars"],
                 request["max_chars"],
+                request["call_to_action"],
             )
             st.session_state.generated_contents.append((i + 1, content))
 
