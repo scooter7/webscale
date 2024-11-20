@@ -183,8 +183,13 @@ elif active_tab == "Generated Content":
         for idx, content_data in enumerate(st.session_state.generated_contents):
             card(
                 title=f"Generated Content {content_data['Request']}",
-                content=content_data["Content"],
-                description="Generated based on user input.",
+                content=f"""
+                    <div>
+                        <div style="font-weight: bold; margin-bottom: 10px;">{content_data['Content']}</div>
+                        <div style="font-size: small; color: gray;">Generated based on user input.</div>
+                    </div>
+                """,
+                description="",
                 key=f"card_{idx}",
             )
     else:
@@ -202,6 +207,16 @@ elif active_tab == "Revisions":
         ]
         response = openai.ChatCompletion.create(model="gpt-4o-mini", messages=messages)
         revised_content = response.choices[0].message["content"].strip()
-        card(title="Revised Content", content=revised_content, description="Updated based on your revision request.", key="revised_card")
+        card(
+            title="Revised Content",
+            content=f"""
+                <div>
+                    <div style="font-weight: bold; margin-bottom: 10px;">{revised_content}</div>
+                    <div style="font-size: small; color: gray;">Updated based on your revision request.</div>
+                </div>
+            """,
+            description="",
+            key="revised_card",
+        )
 
 st.markdown('</div>', unsafe_allow_html=True)
