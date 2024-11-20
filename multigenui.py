@@ -71,12 +71,13 @@ active_tab = tabs(options=tabs_options, default_value="Create Content", key="mai
 if active_tab == "Create Content":
     st.subheader("Create Content Requests")
 
+    st.markdown("### How many pieces of content do you want to create?")
     num_requests = input(
-    default_value="1",
-    type="number",
-    placeholder="How many pieces of content to create?",
-    key="num_requests",
-)
+        default_value="1",
+        type="number",
+        placeholder="Enter number of content pieces",
+        key="num_requests",
+    )
 
     if button(text="Generate Form", key="generate_form"):
         st.session_state.content_requests = [{} for _ in range(int(num_requests))]
@@ -86,22 +87,22 @@ if active_tab == "Create Content":
             st.markdown(f"### Content Request {idx + 1}")
 
             # Input fields using Shadcn components
+            st.markdown(f"#### Prompt for Request {idx + 1}")
             prompt = textarea(
                 default_value="",
                 placeholder="Enter your prompt...",
-                label=f"Prompt for Request {idx + 1}",
                 key=f"prompt_{idx}",
             )
+            st.markdown(f"#### Call to Action for Request {idx + 1}")
             call_to_action = input(
                 default_value="",
                 placeholder="Enter call to action...",
-                label=f"Call to Action for Request {idx + 1}",
                 key=f"cta_{idx}",
             )
+            st.markdown(f"#### Existing Content for Request {idx + 1}")
             content = textarea(
                 default_value="",
                 placeholder="Paste any existing content (if modifying)...",
-                label=f"Existing Content for Request {idx + 1}",
                 key=f"content_{idx}",
             )
 
@@ -137,16 +138,16 @@ elif active_tab == "Generated Content":
 elif active_tab == "Revisions":
     st.subheader("Make Revisions")
 
+    st.markdown("#### Paste the Generated Content to Revise")
     revision_content = textarea(
         default_value="",
         placeholder="Paste the generated content to revise...",
-        label="Generated Content",
         key="revision_content",
     )
+    st.markdown("#### Describe Your Revision Requests")
     revision_request = textarea(
         default_value="",
         placeholder="Describe your revision requests...",
-        label="Revision Request",
         key="revision_request",
     )
 
