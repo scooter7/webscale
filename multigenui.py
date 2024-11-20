@@ -146,22 +146,26 @@ if active_tab == "Create Content":
                 placeholder="Enter maximum character count...",
                 key=f"max_chars_{idx}",
             )
+            # Writing styles and sliders
             writing_styles = st.multiselect(
                 label=f"Select Writing Styles for Request {idx + 1}:",
                 options=list(placeholders.keys()),
                 default=[],
                 key=f"styles_{idx}",
             )
-            style_weights = [
-                slider(
-                    default_value=50,
-                    min_value=0,
-                    max_value=100,
-                    step=1,
-                    key=f"weight_{idx}_{style}",
-                )
-                for style in writing_styles
-            ]
+            style_weights = []
+            if writing_styles:
+                st.markdown("### Set Weights for Selected Writing Styles")
+                for style in writing_styles:
+                    weight = slider(
+                        default_value=50,
+                        min_value=0,
+                        max_value=100,
+                        step=1,
+                        label=f"Weight for {style}",
+                        key=f"weight_{idx}_{style}",
+                    )
+                    style_weights.append(weight)
 
             # Save request data
             st.session_state.content_requests[idx] = {
