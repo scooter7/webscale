@@ -183,36 +183,36 @@ elif active_tab == "Generated Content":
     if st.session_state.generated_contents:
         for idx, content_data in enumerate(st.session_state.generated_contents):
             content = content_data.get("Content", {})
-            content_type = content.get("type", "General")
-
-            if content_type == "Email":
-                email_content = content["content"]
-                ui.card(
-                    title=f"Generated Email {content_data['Request']}",
-                    content=f"""
-                        <div><strong>Subject:</strong> {email_content['subject']}</div>
-                        <div>{email_content['body']}</div>
-                        <div><em>{email_content['signature']}</em></div>
-                    """,
-                    description="Generated email content",
-                    key=f"card_email_{idx}",
-                ).render()
-                download_content(
-                    f"Subject: {email_content['subject']}\n\n{email_content['body']}\n\n{email_content['signature']}",
-                    f"email_{content_data['Request']}.txt",
-                )
-            else:
-                general_content = content["content"]
-                ui.card(
-                    title=f"Generated Content {content_data['Request']}",
-                    content=f"<div>{general_content}</div>",
-                    description="General content generated",
-                    key=f"card_general_{idx}",
-                ).render()
-                download_content(
-                    general_content,
-                    f"content_{content_data['Request']}.txt",
-                )
+            if isinstance(content, dict) and "type" in content:
+                content_type = content["type"]
+                if content_type == "Email":
+                    email_content = content["content"]
+                    ui.card(
+                        title=f"Generated Email {content_data['Request']}",
+                        content=f"""
+                            <div><strong>Subject:</strong> {email_content['subject']}</div>
+                            <div>{email_content['body']}</div>
+                            <div><em>{email_content['signature']}</em></div>
+                        """,
+                        description="Generated email content",
+                        key=f"card_email_{idx}",
+                    ).render()
+                    download_content(
+                        f"Subject: {email_content['subject']}\n\n{email_content['body']}\n\n{email_content['signature']}",
+                        f"email_{content_data['Request']}.txt",
+                    )
+                elif content_type == "General":
+                    general_content = content["content"]
+                    ui.card(
+                        title=f"Generated Content {content_data['Request']}",
+                        content=f"<div>{general_content}</div>",
+                        description="General content generated",
+                        key=f"card_general_{idx}",
+                    ).render()
+                    download_content(
+                        general_content,
+                        f"content_{content_data['Request']}.txt",
+                    )
     else:
         st.info("No content generated yet. Go to 'Create Content' to generate content.")
 
