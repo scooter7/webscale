@@ -1,6 +1,6 @@
 import streamlit as st
 import streamlit_shadcn_ui as ui
-from streamlit_shadcn_ui import input, textarea, slider, button, tabs, card
+from streamlit_shadcn_ui import input, textarea, button, tabs, card
 import openai
 
 st.markdown(
@@ -146,6 +146,7 @@ if active_tab == "Create Content":
                 placeholder="Enter maximum character count...",
                 key=f"max_chars_{idx}",
             )
+
             # Writing styles and sliders
             writing_styles = st.multiselect(
                 label=f"Select Writing Styles for Request {idx + 1}:",
@@ -157,12 +158,11 @@ if active_tab == "Create Content":
             if writing_styles:
                 st.markdown("### Set Weights for Selected Writing Styles")
                 for style in writing_styles:
-                    weight = slider(
-                        default_value=50,
+                    weight = st.slider(
+                        label=f"Weight for {style} (Request {idx + 1})",
                         min_value=0,
                         max_value=100,
-                        step=1,
-                        label=f"Weight for {style}",
+                        value=50,
                         key=f"weight_{idx}_{style}",
                     )
                     style_weights.append(weight)
