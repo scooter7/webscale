@@ -100,35 +100,49 @@ if "content_requests" not in st.session_state:
 if "generated_contents" not in st.session_state:
     st.session_state.generated_contents = []
 
-def generate_content(request, content_type):
+def generate_content(request):
     """
-    Generate content based on request details and type.
+    Generate content based on the user input fields.
     """
-    subject = request.get("subject", "")
-    body = request.get("body", "")
-    signature = request.get("signature", "")
-    writing_style = request.get("writing_style", "General")
-    weight = request.get("weight", 0)
-    
-    style_data = placeholders.get(writing_style, {})
-    verbs = ", ".join(style_data.get("verbs", [])[:3])
-    adjectives = ", ".join(style_data.get("adjectives", [])[:3])
-    beliefs = "; ".join(style_data.get("beliefs", [])[:1])
+    user_prompt = request.get("user_prompt", "")
+    keywords = request.get("keywords", "")
+    audience = request.get("audience", "")
+    specific_facts_stats = request.get("specific_facts_stats", "")
+    call_to_action = request.get("call_to_action", "")
+    user_content = request.get("user_content", "")
+    min_chars = request.get("min_chars", "")
+    max_chars = request.get("max_chars", "")
+    writing_styles = request.get("writing_styles", [])
+    style_weights = request.get("style_weights", [])
 
-    if content_type == "Email":
-        return {
-            "type": "Email",
-            "content": {
-                "subject": subject,
-                "body": f"{body}\n\nVerbs: {verbs}, Adjectives: {adjectives}, Beliefs: {beliefs} ({weight}%).",
-                "signature": signature,
-            },
-        }
-    else:
-        return {
-            "type": "General",
-            "content": f"Subject: {subject}\n\n{body}\n\nSignature: {signature}\n\nStyle: {writing_style} with {weight}% emphasis.\nVerbs: {verbs}, Adjectives: {adjectives}, Beliefs: {beliefs}.",
-        }
+    # Incorporate writing styles and weights
+    style_descriptions = []
+    for style, weight in zip(writing_styles, style_weights):
+        attributes = placeholders.get(style, {})
+        verbs = ", ".join(attributes.get("verbs", [])[:3])
+        adjectives = ", ".join(attributes.get("adjectives", [])[:3])
+        beliefs = "; ".join(attributes.get("beliefs", [])[:1])
+        style_descriptions.append(
+            f"Style: {style} ({weight}% weight). Verbs: {verbs}, Adjectives: {adjectives}, Beliefs: {beliefs}."
+        )
+
+    styles_description = "\n".join(style_descriptions)
+
+    return f"""
+    Prompt: {user_prompt}
+    
+    Keywords: {keywords}
+    Audience: {audience}
+    Specific Facts/Stats: {specific_facts_stats}
+    Call to Action: {call_to_action}
+    Minimum Characters: {min_chars}
+    Maximum Characters: {max_chars}
+    
+    User Content: {user_content}
+    
+    Writing Styles and Weights:
+    {styles_description}
+    """
 
 def download_content(content, filename):
     st.download_button(
@@ -154,25 +168,37 @@ if active_tab == "Create Content":
     if st.session_state.content_requests:
         for idx, _ in enumerate(st.session_state.content_requests):
             st.markdown(f"### Content Request {idx + 1}")
-            subject = input(default_value="", placeholder="Enter subject (if applicable)...", key=f"subject_{idx}")
-            body = textarea(default_value="", placeholder="Enter content body...", key=f"body_{idx}")
-            signature = textarea(default_value="", placeholder="Enter signature (if applicable)...", key=f"signature_{idx}")
-            content_type = st.selectbox("Select content type", ["Email", "General"], key=f"type_{idx}")
-            writing_style = st.selectbox("Choose a writing style", options=list(placeholders.keys()), key=f"style_{idx}")
-            weight = st.slider("Style weight percentage", min_value=0, max_value=100, value=50, step=5, key=f"weight_{idx}")
+            user_prompt = textarea(default_value="", placeholder="Enter your prompt...", key=f"prompt_{idx}")
+            keywords = textarea(default_value="", placeholder="Enter optional keywords...", key=f"keywords_{idx}")
+            audience = input(default_value="", placeholder="Define the audience...", key=f"audience_{idx}")
+            specific_facts_stats = textarea(default_value="", placeholder="Enter specific facts/stats...", key=f"facts_{idx}")
+            call_to_action = input(default_value="", placeholder="Enter a call to action...", key=f"cta_{idx}")
+            user_content = textarea(default_value="", placeholder="Paste existing content (if modifying)...", key=f"content_{idx}")
+            min_chars = input(default_value="", placeholder="Enter minimum character count...", key=f"min_chars_{idx}")
+            max_chars = input(default_value="", placeholder="Enter maximum character count...", key=f"max_chars_{idx}")
+            writing_styles = st.multiselect(label=f"Select Writing Styles for Request {idx + 1}:", options=list(placeholders.keys()), default=[], key=f"styles_{idx}")
+            style_weights = []
+            if writing_styles:
+                st.markdown("### Set Weights for Selected Writing Styles")
+                for style in writing_styles:
+                    weight = st.slider(label=f"Weight for {style}:", min_value=0, max_value=100, value=50, step=1, key=f"weight_{idx}_{style}")
+                    style_weights.append(weight)
             st.session_state.content_requests[idx] = {
-                "subject": subject,
-                "body": body,
-                "signature": signature,
-                "content_type": content_type,
-                "writing_style": writing_style,
-                "weight": weight,
+                "user_prompt": user_prompt,
+                "keywords": keywords,
+                "audience": audience,
+                "specific_facts_stats": specific_facts_stats,
+                "call_to_action": call_to_action,
+                "user_content": user_content,
+                "min_chars": min_chars,
+                "max_chars": max_chars,
+                "writing_styles": writing_styles,
+                "style_weights": style_weights,
             }
     if button(text="Generate All Content", key="generate_all"):
         st.session_state.generated_contents = []
         for idx, request in enumerate(st.session_state.content_requests):
-            content_type = request.get("content_type", "General")
-            generated_content = generate_content(request, content_type)
+            generated_content = generate_content(request)
             st.session_state.generated_contents.append(
                 {"Request": idx + 1, "Content": generated_content}
             )
@@ -182,53 +208,28 @@ elif active_tab == "Generated Content":
     st.subheader("Generated Content")
     if st.session_state.generated_contents:
         for idx, content_data in enumerate(st.session_state.generated_contents):
-            content = content_data.get("Content", {})
-            if isinstance(content, dict) and "type" in content:
-                content_type = content["type"]
-                if content_type == "Email":
-                    email_content = content["content"]
-                    ui.card(
-                        title=f"Generated Email {content_data['Request']}",
-                        content=f"""
-                            <div><strong>Subject:</strong> {email_content['subject']}</div>
-                            <div>{email_content['body']}</div>
-                            <div><em>{email_content['signature']}</em></div>
-                        """,
-                        description="Generated email content",
-                        key=f"card_email_{idx}",
-                    ).render()
-                    download_content(
-                        f"Subject: {email_content['subject']}\n\n{email_content['body']}\n\n{email_content['signature']}",
-                        f"email_{content_data['Request']}.txt",
-                    )
-                elif content_type == "General":
-                    general_content = content["content"]
-                    ui.card(
-                        title=f"Generated Content {content_data['Request']}",
-                        content=f"<div>{general_content}</div>",
-                        description="General content generated",
-                        key=f"card_general_{idx}",
-                    ).render()
-                    download_content(
-                        general_content,
-                        f"content_{content_data['Request']}.txt",
-                    )
+            content = content_data["Content"]
+            ui.card(
+                title=f"Generated Content {content_data['Request']}",
+                content=f"<div>{content}</div>",
+                description="Generated based on user input.",
+                key=f"card_{idx}",
+            ).render()
+            download_content(content, f"content_{content_data['Request']}.txt")
     else:
         st.info("No content generated yet. Go to 'Create Content' to generate content.")
 
 elif active_tab == "Revisions":
     st.subheader("Make Revisions")
-    revision_body = textarea(default_value="", placeholder="Enter revised body...", key="revision_body")
-    revision_type = st.selectbox("Select content type for revision", ["Email", "General"], key="revision_type")
+    revision_body = textarea(default_value="", placeholder="Enter revised content...", key="revision_body")
     if button(text="Revise Content", key="revise"):
-        revised_content = generate_content({"body": revision_body}, revision_type)
-        content_text = revised_content["content"] if revision_type == "General" else f"Subject: {revised_content['content']['subject']}\n\n{revised_content['content']['body']}\n\n{revised_content['content']['signature']}"
+        revised_content = f"Revised Content:\n\n{revision_body}"
         ui.card(
             title="Revised Content",
-            content=f"<div>{content_text}</div>",
-            description="Revised content based on input",
+            content=f"<div>{revised_content}</div>",
+            description="Updated based on your revision input.",
             key="revised_card",
         ).render()
-        download_content(content_text, "revised_content.txt")
+        download_content(revised_content, "revised_content.txt")
 
 st.markdown('</div>', unsafe_allow_html=True)
