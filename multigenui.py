@@ -39,17 +39,10 @@ st.markdown('<div class="app-container">', unsafe_allow_html=True)
 
 openai.api_key = st.secrets["openai_api_key"]
 
+# Initialize placeholders
 placeholders = {
     "Purple - caring, encouraging": {"verbs": ["assist", "befriend", "care"], "adjectives": ["caring", "encouraging"], "beliefs": ["Believe people should be cared for and encouraged"]},
     "Green - adventurous, curious": {"verbs": ["analyze", "discover", "examine"], "adjectives": ["adventurous", "curious"], "beliefs": ["The noblest pursuit is the quest for new knowledge"]},
-    "Maroon - gritty, determined": {"verbs": ["accomplish", "achieve", "build"], "adjectives": ["competitive", "determined"], "beliefs": ["Value extreme and hard work"]},
-    "Orange - artistic, creative": {"verbs": ["compose", "conceptualize", "create"], "adjectives": ["artistic", "creative"], "beliefs": ["Intensely expressive"]},
-    "Yellow - innovative, intelligent": {"verbs": ["accelerate", "advance", "change"], "adjectives": ["innovative", "intelligent"], "beliefs": ["Thrive on new concepts and experimentation"]},
-    "Red - entertaining, humorous": {"verbs": ["animate", "amuse", "captivate"], "adjectives": ["dynamic", "entertaining"], "beliefs": ["Energetic and uplifting"]},
-    "Blue - confident, influential": {"verbs": ["accomplish", "achieve", "affect"], "adjectives": ["confident", "influential"], "beliefs": ["Achievement is paramount"]},
-    "Pink - charming, elegant": {"verbs": ["arise", "aspire", "detail"], "adjectives": ["charming", "elegant"], "beliefs": ["Hold high regard for tradition and excellence"]},
-    "Silver - rebellious, daring": {"verbs": ["activate", "campaign", "challenge"], "adjectives": ["bold", "daring"], "beliefs": ["Rule breakers and establishment challengers"]},
-    "Beige - dedicated, humble": {"verbs": ["dedicate", "humble", "collaborate"], "adjectives": ["dedicated", "humble"], "beliefs": ["There’s no need to differentiate from others"]},
 }
 
 if "content_requests" not in st.session_state:
@@ -196,16 +189,11 @@ if active_tab == "Create Content":
                 request["max_chars"],
                 request["call_to_action"],
             )
-            # Append generated content to session state
             st.session_state.generated_contents.append(
                 {"Request": idx + 1, "Content": generated_content}
             )
-            # Debug log for generated content
-            st.write(f"Debug: Content for Request {idx + 1} generated successfully.")
-
-        # Show success notification and feedback
+        # Success notification
         st.success("Content generation completed! Navigate to the 'Generated Content' tab to view and download your results.")
-        st.info("Click on the 'Generated Content' tab at the top to access your generated content.")
 
 elif active_tab == "Generated Content":
     st.subheader("Generated Content")
