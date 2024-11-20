@@ -200,6 +200,10 @@ if active_tab == "Create Content":
                 {"Request": idx + 1, "Content": generated_content}
             )
 
+        # Show success notification and feedback
+        st.success("Content generation completed! Navigate to the 'Generated Content' tab to view and download your results.")
+        st.info("Click on the 'Generated Content' tab at the top to access your generated content.")
+
 elif active_tab == "Generated Content":
     st.subheader("Generated Content")
 
