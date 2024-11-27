@@ -50,6 +50,60 @@ st.markdown(
 
 st.markdown('<div class="app-container">', unsafe_allow_html=True)
 
+# Color placeholders
+placeholders = {
+    "Purple - caring, encouraging": {
+        "verbs": ["assist", "befriend", "care", "empower"],
+        "adjectives": ["caring", "encouraging", "compassionate"],
+        "beliefs": ["Believe people should be cared for and encouraged"]
+    },
+    "Green - adventurous, curious": {
+        "verbs": ["explore", "discover", "venture"],
+        "adjectives": ["adventurous", "curious", "inquisitive"],
+        "beliefs": ["The noblest pursuit is the quest for new knowledge"]
+    },
+    "Maroon - gritty, determined": {
+        "verbs": ["overcome", "achieve", "persist"],
+        "adjectives": ["gritty", "determined", "resilient"],
+        "beliefs": ["Value hard work and grit"]
+    },
+    "Orange - artistic, creative": {
+        "verbs": ["create", "design", "imagine"],
+        "adjectives": ["artistic", "creative", "expressive"],
+        "beliefs": ["Manifesting new and creative concepts is their end goal"]
+    },
+    "Yellow - innovative, intelligent": {
+        "verbs": ["invent", "innovate", "experiment"],
+        "adjectives": ["innovative", "visionary", "analytical"],
+        "beliefs": ["Thrive on new concepts and experimentation"]
+    },
+    "Red - entertaining, humorous": {
+        "verbs": ["engage", "entertain", "inspire"],
+        "adjectives": ["dynamic", "engaging", "entertaining"],
+        "beliefs": ["Energetic and uplifting"]
+    },
+    "Blue - confident, influential": {
+        "verbs": ["lead", "influence", "achieve"],
+        "adjectives": ["confident", "influential", "strong"],
+        "beliefs": ["Achievement is paramount"]
+    },
+    "Pink - charming, elegant": {
+        "verbs": ["enchant", "refine", "uplift"],
+        "adjectives": ["charming", "refined", "elegant"],
+        "beliefs": ["Pursue refinement, beauty, and vitality"]
+    },
+    "Silver - rebellious, daring": {
+        "verbs": ["challenge", "disrupt", "ignite"],
+        "adjectives": ["rebellious", "bold", "daring"],
+        "beliefs": ["Value freedom, boldness, and defiant ideas"]
+    },
+    "Beige - dedicated, humble": {
+        "verbs": ["collaborate", "empower", "dedicate"],
+        "adjectives": ["dedicated", "humble", "collaborative"],
+        "beliefs": ["All perspectives are equally worth holding"]
+    },
+}
+
 if "content_requests" not in st.session_state:
     st.session_state.content_requests = []
 if "generated_contents" not in st.session_state:
@@ -70,9 +124,11 @@ def generate_content(request):
     writing_styles = request.get("writing_styles", [])
     style_weights = request.get("style_weights", [])
 
-    # Create a prompt for the OpenAI model
+    # Use placeholders globally
     styles_description = "\n".join(
-        f"Style: {style} ({weight}% weight)"
+        f"Style: {style} ({weight}% weight). Verbs: {', '.join(placeholders.get(style, {}).get('verbs', [])[:3])}, "
+        f"Adjectives: {', '.join(placeholders.get(style, {}).get('adjectives', [])[:3])}, "
+        f"Beliefs: {', '.join(placeholders.get(style, {}).get('beliefs', [])[:1])}"
         for style, weight in zip(writing_styles, style_weights)
     )
 
@@ -95,6 +151,27 @@ def generate_content(request):
     """
 
     # Call OpenAI to generate content
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return response["choices"][0]["message"]["content"].strip()
+
+def generate_revised_content(original_content, revision_request):
+    """
+    Generate revised content using OpenAI based on the provided revision instructions.
+    """
+    prompt = f"""
+    Please revise the following content based on the described revision request:
+    
+    Original Content:
+    {original_content}
+    
+    Revision Request:
+    {revision_request}
+    """
+
+    # Call OpenAI to generate the revised content
     response = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt}],
@@ -166,14 +243,9 @@ elif active_tab == "Generated Content":
     if st.session_state.generated_contents:
         for idx, content_data in enumerate(st.session_state.generated_contents):
             content = content_data["Content"]
-            card_content = f"""
-            Request {content_data['Request']}
-
-            {content}
-            """
             ui.card(
                 title=f"Generated Content {content_data['Request']}",
-                content=f'<div class="custom-card-content">{card_content}</div>',
+                content=f'<div class="custom-card-content">{content}</div>',
                 description="Generated based on user input.",
                 class_name="custom-card",
                 key=f"card_{idx}",
@@ -187,11 +259,10 @@ elif active_tab == "Revisions":
     original_content = textarea(default_value="", placeholder="Paste content to revise...", key="revision_content")
     revision_request = textarea(default_value="", placeholder="Describe the revisions needed...", key="revision_request")
     if button(text="Revise Content", key="revise"):
-        revised_content = generate_content({"user_prompt": original_content, "keywords": revision_request})
-        card_content = f"Revised Content:\n\n{revised_content}"
+        revised_content = generate_revised_content(original_content, revision_request)
         ui.card(
             title="Revised Content",
-            content=f'<div class="custom-card-content">{card_content}</div>',
+            content=f'<div class="custom-card-content">{revised_content}</div>',
             description="Updated based on your revision input.",
             class_name="custom-card",
             key="revised_card",
