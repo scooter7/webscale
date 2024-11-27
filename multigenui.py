@@ -2,6 +2,7 @@ import streamlit as st
 import streamlit_shadcn_ui as ui
 from streamlit_shadcn_ui import input, textarea, button, tabs, card
 import openai
+import textwrap
 
 # Initialize OpenAI API key
 openai.api_key = st.secrets["openai_api_key"]
@@ -10,12 +11,6 @@ openai.api_key = st.secrets["openai_api_key"]
 st.markdown(
     """
     <style>
-    .custom-card-content {
-        font-size: 14px;
-        line-height: 1.5;
-        font-family: Arial, sans-serif;
-        white-space: pre-wrap; /* Preserves newlines */
-    }
     .logo-container {
         display: flex;
         justify-content: center;
@@ -175,6 +170,15 @@ def generate_revised_content(original_content, revision_request):
     )
     return response["choices"][0]["message"]["content"].strip()
 
+def format_card_content(content):
+    """
+    Format the content to improve readability by adding spacing between sections.
+    """
+    # Use `textwrap` for consistent line wrapping
+    wrapped_content = textwrap.fill(content, width=80)
+    # Add double line breaks for readability
+    return "\n\n".join(wrapped_content.splitlines())
+
 def download_content(content, filename):
     st.download_button(
         label="Download Content",
@@ -240,13 +244,14 @@ elif active_tab == "Generated Content":
     if st.session_state.generated_contents:
         for idx, content_data in enumerate(st.session_state.generated_contents):
             content = content_data["Content"]
+            formatted_content = format_card_content(content)
             ui.card(
                 title=f"Generated Content {content_data['Request']}",
-                content=content,  # Plain text content
+                content=formatted_content,  # Apply formatting
                 description="Generated based on user input.",
                 key=f"card_{idx}",
             ).render()
-            download_content(content, f"content_{content_data['Request']}.txt")
+            download_content(formatted_content, f"content_{content_data['Request']}.txt")
     else:
         st.info("No content generated yet. Go to 'Create Content' to generate content.")
 
@@ -256,12 +261,13 @@ elif active_tab == "Revisions":
     revision_request = textarea(default_value="", placeholder="Describe the revisions needed...", key="revision_request")
     if button(text="Revise Content", key="revise"):
         revised_content = generate_revised_content(original_content, revision_request)
+        formatted_revised_content = format_card_content(revised_content)
         ui.card(
             title="Revised Content",
-            content=revised_content,  # Plain text content
+            content=formatted_revised_content,  # Apply formatting
             description="Updated based on your revision input.",
             key="revised_card",
         ).render()
-        download_content(revised_content, "revised_content.txt")
+        download_content(formatted_revised_content, "revised_content.txt")
 
 st.markdown('</div>', unsafe_allow_html=True)
