@@ -242,7 +242,7 @@ elif active_tab == "Generated Content":
             content = content_data["Content"]
             ui.card(
                 title=f"Generated Content {content_data['Request']}",
-                content=f'<div class="custom-card-content">{content}</div>',
+                content=content,  # Plain text content
                 description="Generated based on user input.",
                 key=f"card_{idx}",
             ).render()
@@ -258,7 +258,7 @@ elif active_tab == "Revisions":
         revised_content = generate_revised_content(original_content, revision_request)
         ui.card(
             title="Revised Content",
-            content=f'<div class="custom-card-content">{revised_content}</div>',
+            content=revised_content,  # Plain text content
             description="Updated based on your revision input.",
             key="revised_card",
         ).render()
