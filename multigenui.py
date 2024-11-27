@@ -7,10 +7,16 @@ import textwrap
 # Initialize OpenAI API key
 openai.api_key = st.secrets["openai_api_key"]
 
-# Styling for smaller fonts in cards
+# Styling for smaller fonts and better spacing in cards
 st.markdown(
     """
     <style>
+    .card-content {
+        font-size: 12px;
+        line-height: 1.6;
+        font-family: Arial, sans-serif;
+        white-space: pre-wrap; /* Ensures line breaks are rendered */
+    }
     .logo-container {
         display: flex;
         justify-content: center;
@@ -247,7 +253,7 @@ elif active_tab == "Generated Content":
             formatted_content = format_card_content(content)
             ui.card(
                 title=f"Generated Content {content_data['Request']}",
-                content=formatted_content,  # Apply formatting
+                content=f'<div class="card-content">{formatted_content}</div>',
                 description="Generated based on user input.",
                 key=f"card_{idx}",
             ).render()
@@ -264,7 +270,7 @@ elif active_tab == "Revisions":
         formatted_revised_content = format_card_content(revised_content)
         ui.card(
             title="Revised Content",
-            content=formatted_revised_content,  # Apply formatting
+            content=f'<div class="card-content">{formatted_revised_content}</div>',
             description="Updated based on your revision input.",
             key="revised_card",
         ).render()
