@@ -1,27 +1,46 @@
 import streamlit as st
 import streamlit_shadcn_ui as ui
-from streamlit_shadcn_ui import input, textarea, button, tabs, card
+from streamlit_shadcn_ui import input, textarea, button, tabs
 import openai
 import textwrap
 
 # Initialize OpenAI API key
 openai.api_key = st.secrets["openai_api_key"]
 
-# Styling for smaller fonts and better spacing in cards
+# Styling for app container and general appearance
 st.markdown(
     """
     <style>
-    .stCard {
-        font-size: 10px; /* Smaller font size for card content */
-        line-height: 1.2; /* Adjust line spacing for readability */
-        font-family: Arial, sans-serif; /* Use a clean, readable font */
-        white-space: pre-wrap; /* Ensure line breaks are preserved */
-        margin-bottom: 15px; /* Add space between cards */
+    .logo-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .logo-container img {
+        width: 300px;
+    }
+    .app-container {
+        border-left: 5px solid #58258b;
+        border-right: 5px solid #58258b;
+        padding-left: 15px;
+        padding-right: 15px;
     }
     </style>
     """,
     unsafe_allow_html=True
 )
+
+st.markdown(
+    """
+    <div class="logo-container">
+        <img src="https://seeklogo.com/images/E/east-carolina-university-logo-D87F964E5D-seeklogo.com.png" alt="Logo">
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown('<div class="app-container">', unsafe_allow_html=True)
 
 # Color placeholders
 placeholders = {
@@ -155,10 +174,9 @@ def format_card_content(content):
     """
     Format the content to improve readability by adding spacing between sections.
     """
-    # Use `textwrap` for consistent line wrapping
-    wrapped_content = textwrap.fill(content, width=80)
-    # Add double line breaks for readability
-    return "\n\n".join(wrapped_content.splitlines())
+    paragraphs = content.split("\n\n")  # Split into paragraphs
+    formatted_paragraphs = [textwrap.fill(para, width=80) for para in paragraphs]
+    return "\n\n".join(formatted_paragraphs)  # Ensure double line breaks between paragraphs
 
 def download_content(content, filename):
     st.download_button(
@@ -225,16 +243,8 @@ elif active_tab == "Generated Content":
     if st.session_state.generated_contents:
         for idx, content_data in enumerate(st.session_state.generated_contents):
             content = content_data["Content"]
-            formatted_content = format_card_content(content)
-            # Render card with explicit line spacing using st.markdown
-            st.markdown(
-                f"""
-                <div style="font-size: 10px; line-height: 1.4; font-family: Arial, sans-serif; white-space: pre-wrap; margin-bottom: 15px;">
-                {formatted_content}
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+            formatted_content = format_card_content(content)  # Apply consistent formatting
+            st.text(formatted_content)  # Render plain text for consistency
             download_content(formatted_content, f"content_{content_data['Request']}.txt")
     else:
         st.info("No content generated yet. Go to 'Create Content' to generate content.")
@@ -245,14 +255,8 @@ elif active_tab == "Revisions":
     revision_request = textarea(default_value="", placeholder="Describe the revisions needed...", key="revision_request")
     if button(text="Revise Content", key="revise"):
         revised_content = generate_revised_content(original_content, revision_request)
-        formatted_revised_content = format_card_content(revised_content)
-        # Render revised content with explicit line spacing using st.markdown
-        st.markdown(
-            f"""
-            <div style="font-size: 10px; line-height: 1.4; font-family: Arial, sans-serif; white-space: pre-wrap; margin-bottom: 15px;">
-            {formatted_revised_content}
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        formatted_revised_content = format_card_content(revised_content)  # Apply consistent formatting
+        st.text(formatted_revised_content)  # Render plain text for consistency
         download_content(formatted_revised_content, "revised_content.txt")
+
+st.markdown('</div>', unsafe_allow_html=True)
