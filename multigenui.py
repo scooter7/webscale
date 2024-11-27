@@ -16,9 +16,6 @@ st.markdown(
         font-family: Arial, sans-serif;
         white-space: pre-wrap; /* Preserves newlines */
     }
-    .custom-card {
-        margin-bottom: 15px;
-    }
     .logo-container {
         display: flex;
         justify-content: center;
@@ -247,7 +244,6 @@ elif active_tab == "Generated Content":
                 title=f"Generated Content {content_data['Request']}",
                 content=f'<div class="custom-card-content">{content}</div>',
                 description="Generated based on user input.",
-                class_name="custom-card",
                 key=f"card_{idx}",
             ).render()
             download_content(content, f"content_{content_data['Request']}.txt")
@@ -264,7 +260,6 @@ elif active_tab == "Revisions":
             title="Revised Content",
             content=f'<div class="custom-card-content">{revised_content}</div>',
             description="Updated based on your revision input.",
-            class_name="custom-card",
             key="revised_card",
         ).render()
         download_content(revised_content, "revised_content.txt")
