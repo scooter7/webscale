@@ -12,26 +12,16 @@ st.markdown(
     """
     <style>
     .stCard {
-        font-size: 10px; /* Set font size for all cards */
-        line-height: 1.4; /* Adjust line height for readability */
-        font-family: Arial, sans-serif;
-        white-space: pre-wrap; /* Preserve line breaks in plain text */
+        font-size: 10px; /* Smaller font size for card content */
+        line-height: 1.2; /* Adjust line spacing for readability */
+        font-family: Arial, sans-serif; /* Use a clean, readable font */
+        white-space: pre-wrap; /* Ensure line breaks are preserved */
+        margin-bottom: 15px; /* Add space between cards */
     }
     </style>
     """,
     unsafe_allow_html=True
 )
-
-st.markdown(
-    """
-    <div class="logo-container">
-        <img src="https://seeklogo.com/images/E/east-carolina-university-logo-D87F964E5D-seeklogo.com.png" alt="Logo">
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-st.markdown('<div class="app-container">', unsafe_allow_html=True)
 
 # Color placeholders
 placeholders = {
