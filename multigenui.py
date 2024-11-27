@@ -11,26 +11,11 @@ openai.api_key = st.secrets["openai_api_key"]
 st.markdown(
     """
     <style>
-    .card-content {
-        font-size: 12px;
-        line-height: 1.6;
+    .stCard {
+        font-size: 10px; /* Set font size for all cards */
+        line-height: 1.4; /* Adjust line height for readability */
         font-family: Arial, sans-serif;
-        white-space: pre-wrap; /* Ensures line breaks are rendered */
-    }
-    .logo-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-bottom: 20px;
-    }
-    .logo-container img {
-        width: 300px;
-    }
-    .app-container {
-        border-left: 5px solid #58258b;
-        border-right: 5px solid #58258b;
-        padding-left: 15px;
-        padding-right: 15px;
+        white-space: pre-wrap; /* Preserve line breaks in plain text */
     }
     </style>
     """,
@@ -253,7 +238,7 @@ elif active_tab == "Generated Content":
             formatted_content = format_card_content(content)
             ui.card(
                 title=f"Generated Content {content_data['Request']}",
-                content=f'<div class="card-content">{formatted_content}</div>',
+                content=formatted_content,  # Plain text content, no HTML tags
                 description="Generated based on user input.",
                 key=f"card_{idx}",
             ).render()
@@ -270,10 +255,8 @@ elif active_tab == "Revisions":
         formatted_revised_content = format_card_content(revised_content)
         ui.card(
             title="Revised Content",
-            content=f'<div class="card-content">{formatted_revised_content}</div>',
+            content=formatted_revised_content,  # Plain text content, no HTML tags
             description="Updated based on your revision input.",
             key="revised_card",
         ).render()
         download_content(formatted_revised_content, "revised_content.txt")
-
-st.markdown('</div>', unsafe_allow_html=True)
