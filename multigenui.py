@@ -226,12 +226,15 @@ elif active_tab == "Generated Content":
         for idx, content_data in enumerate(st.session_state.generated_contents):
             content = content_data["Content"]
             formatted_content = format_card_content(content)
-            ui.card(
-                title=f"Generated Content {content_data['Request']}",
-                content=formatted_content,  # Plain text content, no HTML tags
-                description="Generated based on user input.",
-                key=f"card_{idx}",
-            ).render()
+            # Render card with explicit line spacing using st.markdown
+            st.markdown(
+                f"""
+                <div style="font-size: 10px; line-height: 1.4; font-family: Arial, sans-serif; white-space: pre-wrap; margin-bottom: 15px;">
+                {formatted_content}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
             download_content(formatted_content, f"content_{content_data['Request']}.txt")
     else:
         st.info("No content generated yet. Go to 'Create Content' to generate content.")
@@ -243,10 +246,13 @@ elif active_tab == "Revisions":
     if button(text="Revise Content", key="revise"):
         revised_content = generate_revised_content(original_content, revision_request)
         formatted_revised_content = format_card_content(revised_content)
-        ui.card(
-            title="Revised Content",
-            content=formatted_revised_content,  # Plain text content, no HTML tags
-            description="Updated based on your revision input.",
-            key="revised_card",
-        ).render()
+        # Render revised content with explicit line spacing using st.markdown
+        st.markdown(
+            f"""
+            <div style="font-size: 10px; line-height: 1.4; font-family: Arial, sans-serif; white-space: pre-wrap; margin-bottom: 15px;">
+            {formatted_revised_content}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         download_content(formatted_revised_content, "revised_content.txt")
