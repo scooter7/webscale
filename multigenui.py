@@ -4,6 +4,8 @@ from streamlit_shadcn_ui import input, textarea, button, tabs
 import openai
 import textwrap
 
+chat=openai
+
 # Initialize OpenAI API key
 openai.api_key = st.secrets["openai_api_key"]
 
