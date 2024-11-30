@@ -3,13 +3,10 @@ import streamlit_shadcn_ui as ui
 from streamlit_shadcn_ui import input, textarea, button, tabs
 import openai
 import textwrap
+from pathlib import Path
 
-chat=openai
-
-# Initialize OpenAI API key
 openai.api_key = st.secrets["openai_api_key"]
 
-# Styling for app container and general appearance
 st.markdown(
     """
     <style>
@@ -243,15 +240,22 @@ placeholders = {
     }
 }
 
+def load_templates():
+    templates = {}
+    base_path = Path("https://github.com/scooter7/webscale/tree/main/Examples")
+    for file in base_path.glob("*.txt"):
+        with open(file, "r") as f:
+            templates[file.stem] = f.read()
+    return templates
+
+templates = load_templates()
+
 if "content_requests" not in st.session_state:
     st.session_state.content_requests = []
 if "generated_contents" not in st.session_state:
     st.session_state.generated_contents = []
 
 def generate_content(request):
-    """
-    Generate actual content using OpenAI based on the form inputs.
-    """
     user_prompt = request.get("user_prompt", "")
     keywords = request.get("keywords", "")
     audience = request.get("audience", "")
@@ -263,7 +267,6 @@ def generate_content(request):
     writing_styles = request.get("writing_styles", [])
     style_weights = request.get("style_weights", [])
 
-    # Use placeholders globally
     styles_description = "\n".join(
         f"Style: {style} ({weight}% weight). Verbs: {', '.join(placeholders.get(style, {}).get('verbs', [])[:3])}, "
         f"Adjectives: {', '.join(placeholders.get(style, {}).get('adjectives', [])[:3])}, "
@@ -271,9 +274,14 @@ def generate_content(request):
         for style, weight in zip(writing_styles, style_weights)
     )
 
+    template_descriptions = "\n".join(
+        f"{name}: {content[:200]}..."
+        for name, content in templates.items()
+    )
+
     prompt = f"""
-    You are an expert content creator. Please generate content based on the following inputs:
-    
+    You are an expert content creator. Use the following inputs and templates to guide the content creation:
+
     Prompt: {user_prompt}
     Keywords: {keywords}
     Audience: {audience}
@@ -282,57 +290,40 @@ def generate_content(request):
     Minimum Characters: {min_chars}
     Maximum Characters: {max_chars}
     User Content: {user_content}
-    
+
     Writing Styles and Weights:
     {styles_description}
-    
+
+    Templates for Guidance:
+    {template_descriptions}
+
     Ensure the content is engaging, concise, and tailored to the audience described.
     """
 
-    # Call OpenAI to generate content
     response = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt}],
     )
     return response.choices[0].message["content"].strip()
 
-
 def generate_revised_content(original_content, revision_request):
-    """
-    Generate revised content using OpenAI based on the provided revision instructions.
-    """
     prompt = f"""
-    Please revise the following content based on the described revision request:
-    
+    Revise the following content based on the described revision request:
+
     Original Content:
     {original_content}
-    
+
     Revision Request:
     {revision_request}
+
+    Ensure the revised content aligns with the requested changes, maintains high quality, and remains concise.
     """
 
-    # Call OpenAI to generate the revised content
     response = openai.ChatCompletion.create(
-        model="gpt-4o",
+        model="gpt-4",
         messages=[{"role": "user", "content": prompt}],
     )
-    return response["choices"][0]["message"]["content"].strip()
-
-def format_card_content(content):
-    """
-    Format the content to improve readability by adding spacing between sections.
-    """
-    paragraphs = content.split("\n\n")  # Split into paragraphs
-    formatted_paragraphs = [textwrap.fill(para, width=80) for para in paragraphs]
-    return "\n\n".join(formatted_paragraphs)  # Ensure double line breaks between paragraphs
-
-def download_content(content, filename):
-    st.download_button(
-        label="Download Content",
-        data=content,
-        file_name=filename,
-        mime="text/plain",
-    )
+    return response.choices[0].message["content"].strip()
 
 tabs_options = ["Create Content", "Generated Content", "Revisions"]
 active_tab = tabs(options=tabs_options, default_value="Create Content", key="main_tabs")
@@ -358,12 +349,24 @@ if active_tab == "Create Content":
             user_content = textarea(default_value="", placeholder="Paste existing content (if modifying)...", key=f"content_{idx}")
             min_chars = input(default_value="", placeholder="Enter minimum character count...", key=f"min_chars_{idx}")
             max_chars = input(default_value="", placeholder="Enter maximum character count...", key=f"max_chars_{idx}")
-            writing_styles = st.multiselect(label=f"Select Writing Styles for Request {idx + 1}:", options=list(placeholders.keys()), default=[], key=f"styles_{idx}")
+            writing_styles = st.multiselect(
+                label=f"Select Writing Styles for Request {idx + 1}:",
+                options=list(placeholders.keys()),
+                default=[],
+                key=f"styles_{idx}",
+            )
             style_weights = []
             if writing_styles:
                 st.markdown("### Set Weights for Selected Writing Styles")
                 for style in writing_styles:
-                    weight = st.slider(label=f"Weight for {style}:", min_value=0, max_value=100, value=50, step=1, key=f"weight_{idx}_{style}")
+                    weight = st.slider(
+                        label=f"Weight for {style}:",
+                        min_value=0,
+                        max_value=100,
+                        value=50,
+                        step=1,
+                        key=f"weight_{idx}_{style}",
+                    )
                     style_weights.append(weight)
             st.session_state.content_requests[idx] = {
                 "user_prompt": user_prompt,
@@ -391,20 +394,30 @@ elif active_tab == "Generated Content":
     if st.session_state.generated_contents:
         for idx, content_data in enumerate(st.session_state.generated_contents):
             content = content_data["Content"]
-            formatted_content = format_card_content(content)  # Apply consistent formatting
-            st.text(formatted_content)  # Render plain text for consistency
-            download_content(formatted_content, f"content_{content_data['Request']}.txt")
+            formatted_content = textwrap.fill(content, width=80)
+            st.text(formatted_content)
+            st.download_button(
+                label="Download Content",
+                data=formatted_content,
+                file_name=f"content_{content_data['Request']}.txt",
+                mime="text/plain",
+            )
     else:
         st.info("No content generated yet. Go to 'Create Content' to generate content.")
 
 elif active_tab == "Revisions":
-    st.subheader("Make Revisions")
+    st.subheader("Revise Content")
     original_content = textarea(default_value="", placeholder="Paste content to revise...", key="revision_content")
     revision_request = textarea(default_value="", placeholder="Describe the revisions needed...", key="revision_request")
     if button(text="Revise Content", key="revise"):
         revised_content = generate_revised_content(original_content, revision_request)
-        formatted_revised_content = format_card_content(revised_content)  # Apply consistent formatting
-        st.text(formatted_revised_content)  # Render plain text for consistency
-        download_content(formatted_revised_content, "revised_content.txt")
+        formatted_revised_content = textwrap.fill(revised_content, width=80)
+        st.text(formatted_revised_content)
+        st.download_button(
+            label="Download Revised Content",
+            data=formatted_revised_content,
+            file_name="revised_content.txt",
+            mime="text/plain",
+        )
 
-st.markdown('</div>', unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)
