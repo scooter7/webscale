@@ -42,8 +42,7 @@ st.markdown(
 
 st.markdown('<div class="app-container">', unsafe_allow_html=True)
 
-# Color placeholders
-{
+placeholders = {
     "Purple - caring, encouraging": {
         "verbs": [
             "assist", "befriend", "care", "collaborate", "connect", "embrace", 
