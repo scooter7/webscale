@@ -313,7 +313,7 @@ def generate_revised_content(original_content, revision_request):
 
     # Call OpenAI to generate the revised content
     response = openai.ChatCompletion.create(
-        model="gpt-40",
+        model="gpt-4o",
         messages=[{"role": "user", "content": prompt}],
     )
     return response["choices"][0]["message"]["content"].strip()
