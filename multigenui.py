@@ -3,7 +3,6 @@ import streamlit_shadcn_ui as ui
 from streamlit_shadcn_ui import input, textarea, button, tabs
 import openai
 import textwrap
-import os
 from pathlib import Path
 
 openai.api_key = st.secrets["openai_api_key"]
@@ -42,7 +41,6 @@ st.markdown(
 
 st.markdown('<div class="app-container">', unsafe_allow_html=True)
 
-# Placeholder dictionary with verbs, adjectives, and beliefs
 placeholders = {
     "Purple - caring, encouraging": {
         "verbs": [
@@ -242,7 +240,6 @@ placeholders = {
     }
 }
 
-# Load templates from the GitHub repository
 def load_templates():
     templates = {}
     base_path = Path("https://github.com/scooter7/webscale/tree/main/Examples")
@@ -309,7 +306,26 @@ def generate_content(request):
     )
     return response.choices[0].message["content"].strip()
 
-tabs_options = ["Create Content", "Generated Content"]
+def generate_revised_content(original_content, revision_request):
+    prompt = f"""
+    Revise the following content based on the described revision request:
+
+    Original Content:
+    {original_content}
+
+    Revision Request:
+    {revision_request}
+
+    Ensure the revised content aligns with the requested changes, maintains high quality, and remains concise.
+    """
+
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return response.choices[0].message["content"].strip()
+
+tabs_options = ["Create Content", "Generated Content", "Revisions"]
 active_tab = tabs(options=tabs_options, default_value="Create Content", key="main_tabs")
 
 if active_tab == "Create Content":
@@ -388,5 +404,20 @@ elif active_tab == "Generated Content":
             )
     else:
         st.info("No content generated yet. Go to 'Create Content' to generate content.")
+
+elif active_tab == "Revisions":
+    st.subheader("Revise Content")
+    original_content = textarea(default_value="", placeholder="Paste content to revise...", key="revision_content")
+    revision_request = textarea(default_value="", placeholder="Describe the revisions needed...", key="revision_request")
+    if button(text="Revise Content", key="revise"):
+        revised_content = generate_revised_content(original_content, revision_request)
+        formatted_revised_content = textwrap.fill(revised_content, width=80)
+        st.text(formatted_revised_content)
+        st.download_button(
+            label="Download Revised Content",
+            data=formatted_revised_content,
+            file_name="revised_content.txt",
+            mime="text/plain",
+        )
 
 st.markdown("</div>", unsafe_allow_html=True)
