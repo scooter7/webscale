@@ -290,11 +290,12 @@ def generate_content(request):
     """
 
     # Call OpenAI to generate content
-    response = openai.chat.completions.create(
-        model="gpt-4o",
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
         messages=[{"role": "user", "content": prompt}],
     )
-    return response["choices"][0]["message"]["content"].strip()
+    return response.choices[0].message["content"].strip()
+
 
 def generate_revised_content(original_content, revision_request):
     """
