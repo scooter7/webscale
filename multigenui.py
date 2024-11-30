@@ -65,6 +65,8 @@ st.markdown('<div class="app-container">', unsafe_allow_html=True)
 "beliefs": ['There’s no need to differentiate from others', 'All perspectives are equally worth holding', 'Will not risk offending anyone', 'Light opinions are held quite loosely', 'Information tells enough of a story']},
 }
 
+}
+
 if "content_requests" not in st.session_state:
     st.session_state.content_requests = []
 if "generated_contents" not in st.session_state:
