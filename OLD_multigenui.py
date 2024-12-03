@@ -25,6 +25,11 @@ st.markdown(
         padding-left: 15px;
         padding-right: 15px;
     }
+    .tabs-container {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -242,10 +247,10 @@ placeholders = {
 
 def load_templates():
     templates = {}
-    base_path = Path("https://github.com/scooter7/webscale/tree/main/Examples")
-    for file in base_path.glob("*.txt"):
-        with open(file, "r") as f:
-            templates[file.stem] = f.read()
+    base_path = Path("https://raw.githubusercontent.com/scooter7/webscale/main/Examples")
+    for template_path in base_path.glob("*.txt"):
+        with template_path.open("r") as f:
+            templates[template_path.stem] = f.read()
     return templates
 
 templates = load_templates()
@@ -298,6 +303,9 @@ def generate_content(request):
     {template_descriptions}
 
     Ensure the content is engaging, concise, and tailored to the audience described.
+    Ensure the call to action (CTA) always appears at the bottom of the email, just above the signature section. This is critical - use the CTA verbatim as the user has entered it.
+    Do not include paragraph numbering in the output. Ensure the content aligns with the tone, structure, and length suggested by the templates.
+    Use the verbs and adjectives for each color placeholder sparingly.
     """
 
     response = openai.ChatCompletion.create(
@@ -316,7 +324,7 @@ def generate_revised_content(original_content, revision_request):
     Revision Request:
     {revision_request}
 
-    Ensure the revised content aligns with the requested changes, maintains high quality, and remains concise.
+    Ensure the revised content aligns with the requested changes, maintains high quality, and adheres to the original structure.
     """
 
     response = openai.ChatCompletion.create(
@@ -326,7 +334,7 @@ def generate_revised_content(original_content, revision_request):
     return response.choices[0].message["content"].strip()
 
 tabs_options = ["Create Content", "Generated Content", "Revisions"]
-active_tab = tabs(options=tabs_options, default_value="Create Content", key="main_tabs")
+active_tab = tabs(options=tabs_options, default_value="Create Content", key="main_tabs", container_class="tabs-container")
 
 if active_tab == "Create Content":
     st.subheader("Create Content Requests")
@@ -394,11 +402,15 @@ elif active_tab == "Generated Content":
     if st.session_state.generated_contents:
         for idx, content_data in enumerate(st.session_state.generated_contents):
             content = content_data["Content"]
-            formatted_content = textwrap.fill(content, width=80)
-            st.text(formatted_content)
+            st.text_area(
+                label=f"Content {idx + 1}",
+                value=content,
+                height=300,
+                key=f"generated_content_{idx}",
+            )
             st.download_button(
                 label="Download Content",
-                data=formatted_content,
+                data=content,
                 file_name=f"content_{content_data['Request']}.txt",
                 mime="text/plain",
             )
@@ -411,11 +423,15 @@ elif active_tab == "Revisions":
     revision_request = textarea(default_value="", placeholder="Describe the revisions needed...", key="revision_request")
     if button(text="Revise Content", key="revise"):
         revised_content = generate_revised_content(original_content, revision_request)
-        formatted_revised_content = textwrap.fill(revised_content, width=80)
-        st.text(formatted_revised_content)
+        st.text_area(
+            label="Revised Content",
+            value=revised_content,
+            height=300,
+            key="revised_content",
+        )
         st.download_button(
             label="Download Revised Content",
-            data=formatted_revised_content,
+            data=revised_content,
             file_name="revised_content.txt",
             mime="text/plain",
         )
