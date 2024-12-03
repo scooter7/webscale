@@ -300,9 +300,9 @@ def generate_content(request):
     User Content: {user_content}
     Call to Action (CTA): {call_to_action}
 
-    Ensure the call to action (CTA) always appears at the bottom of the email, just above the signature section.
+    Ensure the call to action (CTA) always appears at the bottom of the email, just above the signature section. This is critival - use the CTA verbatim as the user has entered it.
     Do not include paragraph numbering in the output. Ensure the content aligns with the tone, structure, and length suggested by the templates.
-    Use the verbs and adjectives for each color placeholder sparingly; it is more important that the content is compelling for people with the beliefs for the colors than it is to keywrod stuff the verbs and adjectives. Be subtle.
+    Use the verbs and adjectives for each color placeholder sparingly.
     """
 
     retries = 3
