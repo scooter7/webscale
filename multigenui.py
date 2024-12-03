@@ -394,11 +394,13 @@ elif active_tab == "Generated Content":
     if st.session_state.generated_contents:
         for idx, content_data in enumerate(st.session_state.generated_contents):
             content = content_data["Content"]
-            formatted_content = textwrap.fill(content, width=80)
-            st.text(formatted_content)
+            formatted_content = "\n\n".join(
+                [f"**Paragraph {i+1}:**\n{para}" for i, para in enumerate(content.split("\n\n"))]
+            )
+            st.markdown(formatted_content, unsafe_allow_html=True)
             st.download_button(
                 label="Download Content",
-                data=formatted_content,
+                data=content,
                 file_name=f"content_{content_data['Request']}.txt",
                 mime="text/plain",
             )
@@ -411,13 +413,13 @@ elif active_tab == "Revisions":
     revision_request = textarea(default_value="", placeholder="Describe the revisions needed...", key="revision_request")
     if button(text="Revise Content", key="revise"):
         revised_content = generate_revised_content(original_content, revision_request)
-        formatted_revised_content = textwrap.fill(revised_content, width=80)
-        st.text(formatted_revised_content)
+        formatted_revised_content = "\n\n".join(
+            [f"**Paragraph {i+1}:**\n{para}" for i, para in enumerate(revised_content.split("\n\n"))]
+        )
+        st.markdown(formatted_revised_content, unsafe_allow_html=True)
         st.download_button(
             label="Download Revised Content",
-            data=formatted_revised_content,
+            data=revised_content,
             file_name="revised_content.txt",
             mime="text/plain",
         )
-
-st.markdown("</div>", unsafe_allow_html=True)
