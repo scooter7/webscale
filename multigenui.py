@@ -25,13 +25,6 @@ st.markdown(
         padding-left: 15px;
         padding-right: 15px;
     }
-    .tabs-container {
-        display: flex;
-        justify-content: center;
-    }
-    .tabs-container > div {
-        width: fit-content;
-    }
     </style>
     """,
     unsafe_allow_html=True
@@ -287,7 +280,7 @@ def generate_content(request):
     )
 
     prompt = f"""
-    You are an expert content creator. Use the following inputs and templates to guide the content creation (please note that the calls to action should always be at the end of the email, just above the signature section):
+    You are an expert content creator. Use the following inputs and templates to guide the content creation (remember that the call to action always appears at the end of the main content, right above the signature area in emails):
 
     Prompt: {user_prompt}
     Keywords: {keywords}
@@ -304,24 +297,14 @@ def generate_content(request):
     Templates for Guidance:
     {template_descriptions}
 
-    Do not include paragraph numbering in the output. Ensure that the content aligns with the tone, structure, and length suggested by the templates.
+    Ensure the content is engaging, concise, and tailored to the audience described.
     """
 
-    retries = 3
-    for attempt in range(retries):
-        try:
-            response = openai.chat.completions.create(
-                model="gpt-4o",
-                messages=[{"role": "user", "content": prompt}],
-            )
-            return response.choices[0].message["content"].strip()
-        except openai.error.APIError as e:
-            if attempt < retries - 1:
-                time.sleep(2 ** attempt)
-                continue
-            else:
-                st.error("An error occurred while connecting to OpenAI. Please try again later.")
-                return f"Error: {str(e)}"
+    response = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return response.choices[0].message["content"].strip()
 
 def generate_revised_content(original_content, revision_request):
     prompt = f"""
@@ -336,17 +319,14 @@ def generate_revised_content(original_content, revision_request):
     Ensure the revised content aligns with the requested changes, maintains high quality, and remains concise.
     """
 
-    response = openai.chat.completions.create(
+    response = openai.ChatCompletion.create(
         model="gpt-4o",
         messages=[{"role": "user", "content": prompt}],
     )
     return response.choices[0].message["content"].strip()
 
 tabs_options = ["Create Content", "Generated Content", "Revisions"]
-
-st.markdown('<div class="tabs-container">', unsafe_allow_html=True)
 active_tab = tabs(options=tabs_options, default_value="Create Content", key="main_tabs")
-st.markdown('</div>', unsafe_allow_html=True)
 
 if active_tab == "Create Content":
     st.subheader("Create Content Requests")
