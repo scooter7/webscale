@@ -1,0 +1,24 @@
+Request 1:
+user_prompt: write an email to prospective students at ECU emphasizing internship opportunities as well as scholarship offerings
+keywords: great graduate school and career placement rates
+audience: 
+specific_facts_stats: Top-ranked for best value
+call_to_action: Apply Now!
+user_content: 
+min_chars: 
+max_chars: 
+writing_styles: ['Purple - caring, encouraging', 'Blue - confident, influential']
+style_weights: [50, 50]
+
+Request 2:
+user_prompt: write an email to admitted students at ECU encouraging them to pay their deposit
+keywords: 
+audience: 
+specific_facts_stats: 
+call_to_action: Register Now!
+user_content: 
+min_chars: 
+max_chars: 
+writing_styles: ['Maroon - gritty, determined']
+style_weights: [100]
+
