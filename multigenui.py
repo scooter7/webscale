@@ -25,6 +25,13 @@ st.markdown(
         padding-left: 15px;
         padding-right: 15px;
     }
+    .tabs-container {
+        display: flex;
+        justify-content: center;
+    }
+    .tabs-container > div {
+        width: fit-content;
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -310,7 +317,7 @@ def generate_content(request):
             return response.choices[0].message["content"].strip()
         except openai.error.APIError as e:
             if attempt < retries - 1:
-                time.sleep(2 ** attempt)  # Exponential backoff
+                time.sleep(2 ** attempt)
                 continue
             else:
                 st.error("An error occurred while connecting to OpenAI. Please try again later.")
@@ -336,7 +343,10 @@ def generate_revised_content(original_content, revision_request):
     return response.choices[0].message["content"].strip()
 
 tabs_options = ["Create Content", "Generated Content", "Revisions"]
+
+st.markdown('<div class="tabs-container">', unsafe_allow_html=True)
 active_tab = tabs(options=tabs_options, default_value="Create Content", key="main_tabs")
+st.markdown('</div>', unsafe_allow_html=True)
 
 if active_tab == "Create Content":
     st.subheader("Create Content Requests")
@@ -404,13 +414,11 @@ elif active_tab == "Generated Content":
     if st.session_state.generated_contents:
         for idx, content_data in enumerate(st.session_state.generated_contents):
             content = content_data["Content"]
-            formatted_content = "\n\n".join(
-                [f"**Paragraph {i+1}:**\n{para}" for i, para in enumerate(content.split("\n\n"))]
-            )
-            st.markdown(formatted_content, unsafe_allow_html=True)
+            formatted_content = textwrap.fill(content, width=80)
+            st.text(formatted_content)
             st.download_button(
                 label="Download Content",
-                data=content,
+                data=formatted_content,
                 file_name=f"content_{content_data['Request']}.txt",
                 mime="text/plain",
             )
@@ -423,13 +431,13 @@ elif active_tab == "Revisions":
     revision_request = textarea(default_value="", placeholder="Describe the revisions needed...", key="revision_request")
     if button(text="Revise Content", key="revise"):
         revised_content = generate_revised_content(original_content, revision_request)
-        formatted_revised_content = "\n\n".join(
-            [f"**Paragraph {i+1}:**\n{para}" for i, para in enumerate(revised_content.split("\n\n"))]
-        )
-        st.markdown(formatted_revised_content, unsafe_allow_html=True)
+        formatted_revised_content = textwrap.fill(revised_content, width=80)
+        st.text(formatted_revised_content)
         st.download_button(
             label="Download Revised Content",
-            data=revised_content,
+            data=formatted_revised_content,
             file_name="revised_content.txt",
             mime="text/plain",
         )
+
+st.markdown("</div>", unsafe_allow_html=True)
