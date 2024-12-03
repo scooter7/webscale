@@ -5,6 +5,60 @@ from streamlit_shadcn_ui import input, textarea, button, tabs
 import openai
 import textwrap
 from pathlib import Path
+import os
+from datetime import datetime
+from github import Github
+
+# GitHub credentials
+GITHUB_TOKEN = st.secrets["github_token"]  # Store your token securely in Streamlit secrets
+REPO_NAME = "scooter7/webscale"
+SAVE_FOLDER = "ECU"
+
+# Initialize GitHub
+github = Github(GITHUB_TOKEN)
+repo = github.get_repo(REPO_NAME)
+
+def save_to_github(file_name, content):
+    try:
+        file_path = f"{SAVE_FOLDER}/{file_name}"
+        repo.create_file(
+            path=file_path,
+            message=f"Add {file_name}",
+            content=content,
+            branch="main"
+        )
+        st.success(f"Saved {file_name} to GitHub.")
+    except Exception as e:
+        st.error(f"Error saving {file_name} to GitHub: {e}")
+
+def save_user_data_and_content(requests, generated_contents):
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    folder_name = "user_requests_and_content"
+    os.makedirs(folder_name, exist_ok=True)
+
+    # Save user requests
+    request_file_name = f"{folder_name}/user_requests_{timestamp}.txt"
+    with open(request_file_name, "w") as f:
+        for idx, request in enumerate(requests):
+            f.write(f"Request {idx + 1}:\n")
+            for key, value in request.items():
+                f.write(f"{key}: {value}\n")
+            f.write("\n")
+
+    # Save generated content
+    content_file_name = f"{folder_name}/generated_content_{timestamp}.txt"
+    with open(content_file_name, "w") as f:
+        for idx, content in enumerate(generated_contents):
+            f.write(f"Generated Content {idx + 1}:\n")
+            f.write(content["Content"] + "\n")
+            f.write("\n")
+
+    # Upload to GitHub
+    with open(request_file_name, "r") as f:
+        save_to_github(f"user_requests_{timestamp}.txt", f.read())
+
+    with open(content_file_name, "r") as f:
+        save_to_github(f"generated_content_{timestamp}.txt", f.read())
 
 openai.api_key = st.secrets["openai_api_key"]
 
@@ -47,6 +101,7 @@ st.markdown(
 
 st.markdown('<div class="app-container">', unsafe_allow_html=True)
 
+# Placeholder data
 placeholders = {
     "Purple - caring, encouraging": {
         "verbs": [
@@ -266,6 +321,26 @@ def clean_content(content):
     cleaned_content = re.sub(r"[^\w\s,.\'\"!?-]", "", cleaned_content)  # Remove emojis and non-alphanumeric characters
     return cleaned_content.strip()
 
+def generate_revised_content(original_content, revision_request):
+    prompt = f"""
+    Revise the following content based on the described revision request:
+
+    Original Content:
+    {original_content}
+
+    Revision Request:
+    {revision_request}
+
+    Ensure the revised content aligns with the requested changes, maintains high quality, and adheres to the original structure.
+    Do not use asterisks (*) or emojis in the response.
+    """
+    response = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": prompt}],
+    )
+    content = response.choices[0].message["content"]
+    return clean_content(content)
+
 def generate_content(request):
     user_prompt = request.get("user_prompt", "")
     keywords = request.get("keywords", "")
@@ -312,27 +387,6 @@ def generate_content(request):
     Ensure the call to action (CTA) always appears at the bottom of the email, just above the signature section. This is critical - use the CTA verbatim as the user has entered it.
     Do not include paragraph numbering in the output. Ensure the content aligns with the tone, structure, and length suggested by the templates.
     Use the verbs and adjectives for each color placeholder sparingly.
-    Do not use asterisks (*) or emojis in the response.
-    """
-
-    response = openai.ChatCompletion.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": prompt}],
-    )
-    content = response.choices[0].message["content"]
-    return clean_content(content)
-
-def generate_revised_content(original_content, revision_request):
-    prompt = f"""
-    Revise the following content based on the described revision request:
-
-    Original Content:
-    {original_content}
-
-    Revision Request:
-    {revision_request}
-
-    Ensure the revised content aligns with the requested changes, maintains high quality, and adheres to the original structure.
     Do not use asterisks (*) or emojis in the response.
     """
 
@@ -406,6 +460,7 @@ if active_tab == "Create Content":
                 {"Request": idx + 1, "Content": generated_content}
             )
         st.success("Content generation completed! Navigate to the 'Generated Content' tab to view and download your results.")
+        save_user_data_and_content(st.session_state.content_requests, st.session_state.generated_contents)
 
 elif active_tab == "Generated Content":
     st.subheader("Generated Content")
@@ -429,21 +484,42 @@ elif active_tab == "Generated Content":
 
 elif active_tab == "Revisions":
     st.subheader("Revise Content")
-    original_content = textarea(default_value="", placeholder="Paste content to revise...", key="revision_content")
-    revision_request = textarea(default_value="", placeholder="Describe the revisions needed...", key="revision_request")
+    original_content = textarea(
+        default_value="", 
+        placeholder="Paste content to revise...", 
+        key="revision_content"
+    )
+    revision_request = textarea(
+        default_value="", 
+        placeholder="Describe the revisions needed...", 
+        key="revision_request"
+    )
     if button(text="Revise Content", key="revise"):
-        revised_content = generate_revised_content(original_content, revision_request)
-        st.text_area(
-            label="Revised Content",
-            value=revised_content,
-            height=300,
-            key="revised_content",
-        )
-        st.download_button(
-            label="Download Revised Content",
-            data=revised_content,
-            file_name="revised_content.txt",
-            mime="text/plain",
-        )
+        # Ensure both fields are filled before generating revisions
+        if original_content.strip() and revision_request.strip():
+            revised_content = generate_revised_content(original_content, revision_request)
 
-st.markdown("</div>", unsafe_allow_html=True)
+            # Display the revised content
+            st.text_area(
+                label="Revised Content",
+                value=revised_content,
+                height=300,
+                key="revised_content",
+            )
+
+            # Save to GitHub
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            revision_file_name = f"revised_content_{timestamp}.txt"
+            revision_content = f"Original Content:\n{original_content}\n\nRevision Request:\n{revision_request}\n\nRevised Content:\n{revised_content}\n"
+            save_to_github(revision_file_name, revision_content)
+
+            # Allow download
+            st.download_button(
+                label="Download Revised Content",
+                data=revised_content,
+                file_name="revised_content.txt",
+                mime="text/plain",
+            )
+            st.success(f"Revised content saved to GitHub as {revision_file_name}.")
+        else:
+            st.error("Please provide both the original content and the revision request.")
