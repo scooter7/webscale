@@ -280,7 +280,7 @@ def generate_content(request):
     )
 
     prompt = f"""
-    You are an expert content creator. Use the following inputs and templates to guide the content creation:
+    You are an expert content creator. Use the following inputs and templates to guide the content creation (please note that the calls to action should always be at the end of the email, just above the signature section):
 
     Prompt: {user_prompt}
     Keywords: {keywords}
@@ -297,14 +297,24 @@ def generate_content(request):
     Templates for Guidance:
     {template_descriptions}
 
-    Ensure the content is engaging, concise, and tailored to the audience described.
+    Do not include paragraph numbering in the output. Ensure that the content aligns with the tone, structure, and length suggested by the templates.
     """
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return response.choices[0].message["content"].strip()
+    retries = 3
+    for attempt in range(retries):
+        try:
+            response = openai.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return response.choices[0].message["content"].strip()
+        except openai.error.APIError as e:
+            if attempt < retries - 1:
+                time.sleep(2 ** attempt)  # Exponential backoff
+                continue
+            else:
+                st.error("An error occurred while connecting to OpenAI. Please try again later.")
+                return f"Error: {str(e)}"
 
 def generate_revised_content(original_content, revision_request):
     prompt = f"""
