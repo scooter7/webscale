@@ -6,3 +6,4 @@ google-search-results
 replicate
 streamlit-image-select
 streamlit-shadcn-ui
+PyGithub
