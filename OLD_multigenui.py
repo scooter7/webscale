@@ -65,6 +65,17 @@ openai.api_key = st.secrets["openai_api_key"]
 st.markdown(
     """
     <style>
+    .st-emotion-cache-12fmjuu.ezrtsby2 {
+        display: none;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    """
+    <style>
     .logo-container {
         display: flex;
         justify-content: center;
