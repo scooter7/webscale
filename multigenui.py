@@ -2,7 +2,6 @@ import streamlit as st
 import streamlit_shadcn_ui as ui
 from streamlit_shadcn_ui import input, textarea, button, tabs
 import openai
-import textwrap
 from pathlib import Path
 import time
 
@@ -30,9 +29,16 @@ st.markdown(
     .tabs-container {
         display: flex;
         justify-content: center;
+        margin-bottom: 20px;
     }
     .tabs-container > div {
         width: fit-content;
+    }
+    .content-output {
+        white-space: pre-wrap;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.6;
     }
     </style>
     """,
@@ -277,13 +283,6 @@ def generate_content(request):
     writing_styles = request.get("writing_styles", [])
     style_weights = request.get("style_weights", [])
 
-    styles_description = "\n".join(
-        f"Style: {style} ({weight}% weight). Verbs: {', '.join(placeholders.get(style, {}).get('verbs', [])[:3])}, "
-        f"Adjectives: {', '.join(placeholders.get(style, {}).get('adjectives', [])[:3])}, "
-        f"Beliefs: {', '.join(placeholders.get(style, {}).get('beliefs', [])[:1])}"
-        for style, weight in zip(writing_styles, style_weights)
-    )
-
     template_descriptions = "\n".join(
         f"{name}: {content[:200]}..."
         for name, content in templates.items()
@@ -299,22 +298,18 @@ def generate_content(request):
     Minimum Characters: {min_chars}
     Maximum Characters: {max_chars}
     User Content: {user_content}
+    Call to Action (CTA): {call_to_action}
 
-    Writing Styles and Weights:
-    {styles_description}
-
-    Templates for Guidance:
-    {template_descriptions}
-
-    Ensure the call to action always appears at the bottom of the email, just above the signature section.
+    Ensure the call to action (CTA) always appears at the bottom of the email, just above the signature section.
     Do not include paragraph numbering in the output. Ensure the content aligns with the tone, structure, and length suggested by the templates.
+    Use the verbs and adjectives for each color placeholder sparingly; it is more important that the content is compelling for people with the beliefs for the colors than it is to keywrod stuff the verbs and adjectives. Be subtle.
     """
 
     retries = 3
     for attempt in range(retries):
         try:
             response = openai.ChatCompletion.create(
-                model="gpt-4",
+                model="gpt-4o",
                 messages=[{"role": "user", "content": prompt}],
             )
             return response.choices[0].message["content"].strip()
@@ -325,25 +320,6 @@ def generate_content(request):
             else:
                 st.error("An error occurred while connecting to OpenAI. Please try again later.")
                 return f"Error: {str(e)}"
-
-def generate_revised_content(original_content, revision_request):
-    prompt = f"""
-    Revise the following content based on the described revision request:
-
-    Original Content:
-    {original_content}
-
-    Revision Request:
-    {revision_request}
-
-    Ensure the revised content aligns with the requested changes, maintains high quality, and remains concise.
-    """
-
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return response.choices[0].message["content"].strip()
 
 tabs_options = ["Create Content", "Generated Content", "Revisions"]
 
@@ -372,25 +348,6 @@ if active_tab == "Create Content":
             user_content = textarea(default_value="", placeholder="Paste existing content (if modifying)...", key=f"content_{idx}")
             min_chars = input(default_value="", placeholder="Enter minimum character count...", key=f"min_chars_{idx}")
             max_chars = input(default_value="", placeholder="Enter maximum character count...", key=f"max_chars_{idx}")
-            writing_styles = st.multiselect(
-                label=f"Select Writing Styles for Request {idx + 1}:",
-                options=list(placeholders.keys()),
-                default=[],
-                key=f"styles_{idx}",
-            )
-            style_weights = []
-            if writing_styles:
-                st.markdown("### Set Weights for Selected Writing Styles")
-                for style in writing_styles:
-                    weight = st.slider(
-                        label=f"Weight for {style}:",
-                        min_value=0,
-                        max_value=100,
-                        value=50,
-                        step=1,
-                        key=f"weight_{idx}_{style}",
-                    )
-                    style_weights.append(weight)
             st.session_state.content_requests[idx] = {
                 "user_prompt": user_prompt,
                 "keywords": keywords,
@@ -400,8 +357,6 @@ if active_tab == "Create Content":
                 "user_content": user_content,
                 "min_chars": min_chars,
                 "max_chars": max_chars,
-                "writing_styles": writing_styles,
-                "style_weights": style_weights,
             }
     if button(text="Generate All Content", key="generate_all"):
         st.session_state.generated_contents = []
@@ -417,30 +372,14 @@ elif active_tab == "Generated Content":
     if st.session_state.generated_contents:
         for idx, content_data in enumerate(st.session_state.generated_contents):
             content = content_data["Content"]
-            formatted_content = textwrap.fill(content, width=80)
-            st.text(formatted_content)
+            st.markdown(f"<div class='content-output'>{content}</div>", unsafe_allow_html=True)
             st.download_button(
                 label="Download Content",
-                data=formatted_content,
+                data=content,
                 file_name=f"content_{content_data['Request']}.txt",
                 mime="text/plain",
             )
     else:
         st.info("No content generated yet. Go to 'Create Content' to generate content.")
-
-elif active_tab == "Revisions":
-    st.subheader("Revise Content")
-    original_content = textarea(default_value="", placeholder="Paste content to revise...", key="revision_content")
-    revision_request = textarea(default_value="", placeholder="Describe the revisions needed...", key="revision_request")
-    if button(text="Revise Content", key="revise"):
-        revised_content = generate_revised_content(original_content, revision_request)
-        formatted_revised_content = textwrap.fill(revised_content, width=80)
-        st.text(formatted_revised_content)
-        st.download_button(
-            label="Download Revised Content",
-            data=formatted_revised_content,
-            file_name="revised_content.txt",
-            mime="text/plain",
-        )
 
 st.markdown("</div>", unsafe_allow_html=True)
