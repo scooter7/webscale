@@ -4,9 +4,11 @@ from streamlit_shadcn_ui import input, textarea, button, tabs
 import openai
 import textwrap
 from pathlib import Path
+import time
 
 openai.api_key = st.secrets["openai_api_key"]
 
+# CSS for Styling
 st.markdown(
     """
     <style>
@@ -25,11 +27,19 @@ st.markdown(
         padding-left: 15px;
         padding-right: 15px;
     }
+    .tabs-container {
+        display: flex;
+        justify-content: center;
+    }
+    .tabs-container > div {
+        width: fit-content;
+    }
     </style>
     """,
     unsafe_allow_html=True
 )
 
+# Logo
 st.markdown(
     """
     <div class="logo-container">
@@ -280,13 +290,12 @@ def generate_content(request):
     )
 
     prompt = f"""
-    You are an expert content creator. Use the following inputs and templates to guide the content creation (remember that the call to action always appears at the end of the main content, right above the signature area in emails):
+    You are an expert content creator. Use the following inputs and templates to guide the content creation:
 
     Prompt: {user_prompt}
     Keywords: {keywords}
     Audience: {audience}
     Specific Facts/Stats: {specific_facts_stats}
-    Call to Action: {call_to_action}
     Minimum Characters: {min_chars}
     Maximum Characters: {max_chars}
     User Content: {user_content}
@@ -297,14 +306,25 @@ def generate_content(request):
     Templates for Guidance:
     {template_descriptions}
 
-    Ensure the content is engaging, concise, and tailored to the audience described.
+    Ensure the call to action always appears at the bottom of the email, just above the signature section.
+    Do not include paragraph numbering in the output. Ensure the content aligns with the tone, structure, and length suggested by the templates.
     """
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return response.choices[0].message["content"].strip()
+    retries = 3
+    for attempt in range(retries):
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return response.choices[0].message["content"].strip()
+        except openai.error.APIError as e:
+            if attempt < retries - 1:
+                time.sleep(2 ** attempt)
+                continue
+            else:
+                st.error("An error occurred while connecting to OpenAI. Please try again later.")
+                return f"Error: {str(e)}"
 
 def generate_revised_content(original_content, revision_request):
     prompt = f"""
@@ -320,13 +340,16 @@ def generate_revised_content(original_content, revision_request):
     """
 
     response = openai.ChatCompletion.create(
-        model="gpt-4o",
+        model="gpt-4",
         messages=[{"role": "user", "content": prompt}],
     )
     return response.choices[0].message["content"].strip()
 
 tabs_options = ["Create Content", "Generated Content", "Revisions"]
+
+st.markdown('<div class="tabs-container">', unsafe_allow_html=True)
 active_tab = tabs(options=tabs_options, default_value="Create Content", key="main_tabs")
+st.markdown('</div>', unsafe_allow_html=True)
 
 if active_tab == "Create Content":
     st.subheader("Create Content Requests")
