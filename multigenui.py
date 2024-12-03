@@ -1,3 +1,4 @@
+import re
 import streamlit as st
 import streamlit_shadcn_ui as ui
 from streamlit_shadcn_ui import input, textarea, button, tabs
@@ -260,6 +261,11 @@ if "content_requests" not in st.session_state:
 if "generated_contents" not in st.session_state:
     st.session_state.generated_contents = []
 
+def clean_content(content):
+    cleaned_content = re.sub(r"\*", "", content)  # Remove all asterisks
+    cleaned_content = re.sub(r"[^\w\s,.\'\"!?-]", "", cleaned_content)  # Remove emojis and non-alphanumeric characters
+    return cleaned_content.strip()
+
 def generate_content(request):
     user_prompt = request.get("user_prompt", "")
     keywords = request.get("keywords", "")
@@ -306,13 +312,15 @@ def generate_content(request):
     Ensure the call to action (CTA) always appears at the bottom of the email, just above the signature section. This is critical - use the CTA verbatim as the user has entered it.
     Do not include paragraph numbering in the output. Ensure the content aligns with the tone, structure, and length suggested by the templates.
     Use the verbs and adjectives for each color placeholder sparingly.
+    Do not use asterisks (*) or emojis in the response.
     """
 
     response = openai.ChatCompletion.create(
         model="gpt-4o",
         messages=[{"role": "user", "content": prompt}],
     )
-    return response.choices[0].message["content"].strip()
+    content = response.choices[0].message["content"]
+    return clean_content(content)
 
 def generate_revised_content(original_content, revision_request):
     prompt = f"""
@@ -325,13 +333,15 @@ def generate_revised_content(original_content, revision_request):
     {revision_request}
 
     Ensure the revised content aligns with the requested changes, maintains high quality, and adheres to the original structure.
+    Do not use asterisks (*) or emojis in the response.
     """
 
     response = openai.ChatCompletion.create(
         model="gpt-4o",
         messages=[{"role": "user", "content": prompt}],
     )
-    return response.choices[0].message["content"].strip()
+    content = response.choices[0].message["content"]
+    return clean_content(content)
 
 tabs_options = ["Create Content", "Generated Content", "Revisions"]
 active_tab = tabs(options=tabs_options, default_value="Create Content", key="main_tabs", container_class="tabs-container")
