@@ -329,8 +329,8 @@ def generate_revised_content(original_content, revision_request):
     Ensure the revised content aligns with the requested changes, maintains high quality, and remains concise.
     """
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
+    response = openai.chat.completions.create(
+        model="gpt-4o",
         messages=[{"role": "user", "content": prompt}],
     )
     return response.choices[0].message["content"].strip()
