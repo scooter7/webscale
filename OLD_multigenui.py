@@ -301,7 +301,7 @@ def generate_content(request):
     """
 
     response = openai.ChatCompletion.create(
-        model="gpt-4",
+        model="gpt-4o",
         messages=[{"role": "user", "content": prompt}],
     )
     return response.choices[0].message["content"].strip()
@@ -320,7 +320,7 @@ def generate_revised_content(original_content, revision_request):
     """
 
     response = openai.ChatCompletion.create(
-        model="gpt-4",
+        model="gpt-4o",
         messages=[{"role": "user", "content": prompt}],
     )
     return response.choices[0].message["content"].strip()
