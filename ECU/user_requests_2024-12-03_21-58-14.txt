@@ -1,0 +1,24 @@
+Request 1:
+user_prompt: Write an email to prospective students at ECU emphasizing financial aid and scholarship opportunities
+keywords: nursing and business programs
+audience: 
+specific_facts_stats: ECU is top-ranked for affordability
+call_to_action: Apply Now!
+user_content: 
+min_chars: 
+max_chars: 
+writing_styles: ['Purple - caring, encouraging', 'Blue - confident, influential']
+style_weights: [50, 50]
+
+Request 2:
+user_prompt: Write an email to prospective students at ECU emphasizing student life
+keywords: tons of clubs and student organizations to join
+audience: 
+specific_facts_stats: 
+call_to_action: Apply Today!
+user_content: 
+min_chars: 
+max_chars: 
+writing_styles: ['Yellow - innovative, intelligent']
+style_weights: [100]
+
