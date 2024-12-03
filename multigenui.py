@@ -321,6 +321,26 @@ def clean_content(content):
     cleaned_content = re.sub(r"[^\w\s,.\'\"!?-]", "", cleaned_content)  # Remove emojis and non-alphanumeric characters
     return cleaned_content.strip()
 
+def generate_revised_content(original_content, revision_request):
+    prompt = f"""
+    Revise the following content based on the described revision request:
+
+    Original Content:
+    {original_content}
+
+    Revision Request:
+    {revision_request}
+
+    Ensure the revised content aligns with the requested changes, maintains high quality, and adheres to the original structure.
+    Do not use asterisks (*) or emojis in the response.
+    """
+    response = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": prompt}],
+    )
+    content = response.choices[0].message["content"]
+    return clean_content(content)
+
 def generate_content(request):
     user_prompt = request.get("user_prompt", "")
     keywords = request.get("keywords", "")
@@ -464,21 +484,42 @@ elif active_tab == "Generated Content":
 
 elif active_tab == "Revisions":
     st.subheader("Revise Content")
-    original_content = textarea(default_value="", placeholder="Paste content to revise...", key="revision_content")
-    revision_request = textarea(default_value="", placeholder="Describe the revisions needed...", key="revision_request")
+    original_content = textarea(
+        default_value="", 
+        placeholder="Paste content to revise...", 
+        key="revision_content"
+    )
+    revision_request = textarea(
+        default_value="", 
+        placeholder="Describe the revisions needed...", 
+        key="revision_request"
+    )
     if button(text="Revise Content", key="revise"):
-        revised_content = generate_content({"user_prompt": revision_request})
-        st.text_area(
-            label="Revised Content",
-            value=revised_content,
-            height=300,
-            key="revised_content",
-        )
-        st.download_button(
-            label="Download Revised Content",
-            data=revised_content,
-            file_name="revised_content.txt",
-            mime="text/plain",
-        )
+        # Ensure both fields are filled before generating revisions
+        if original_content.strip() and revision_request.strip():
+            revised_content = generate_revised_content(original_content, revision_request)
 
-st.markdown("</div>", unsafe_allow_html=True)
+            # Display the revised content
+            st.text_area(
+                label="Revised Content",
+                value=revised_content,
+                height=300,
+                key="revised_content",
+            )
+
+            # Save to GitHub
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            revision_file_name = f"revised_content_{timestamp}.txt"
+            revision_content = f"Original Content:\n{original_content}\n\nRevision Request:\n{revision_request}\n\nRevised Content:\n{revised_content}\n"
+            save_to_github(revision_file_name, revision_content)
+
+            # Allow download
+            st.download_button(
+                label="Download Revised Content",
+                data=revised_content,
+                file_name="revised_content.txt",
+                mime="text/plain",
+            )
+            st.success(f"Revised content saved to GitHub as {revision_file_name}.")
+        else:
+            st.error("Please provide both the original content and the revision request.")
