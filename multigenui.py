@@ -101,6 +101,7 @@ st.markdown(
 
 st.markdown('<div class="app-container">', unsafe_allow_html=True)
 
+# Placeholder data
 placeholders = {
     "Purple - caring, encouraging": {
         "verbs": [
@@ -376,27 +377,6 @@ def generate_content(request):
     content = response.choices[0].message["content"]
     return clean_content(content)
 
-def generate_revised_content(original_content, revision_request):
-    prompt = f"""
-    Revise the following content based on the described revision request:
-
-    Original Content:
-    {original_content}
-
-    Revision Request:
-    {revision_request}
-
-    Ensure the revised content aligns with the requested changes, maintains high quality, and adheres to the original structure.
-    Do not use asterisks (*) or emojis in the response.
-    """
-
-    response = openai.ChatCompletion.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": prompt}],
-    )
-    content = response.choices[0].message["content"]
-    return clean_content(content)
-
 tabs_options = ["Create Content", "Generated Content", "Revisions"]
 active_tab = tabs(options=tabs_options, default_value="Create Content", key="main_tabs", container_class="tabs-container")
 
@@ -453,16 +433,14 @@ if active_tab == "Create Content":
                 "style_weights": style_weights,
             }
     if button(text="Generate All Content", key="generate_all"):
-    st.session_state.generated_contents = []
-    for idx, request in enumerate(st.session_state.content_requests):
-        generated_content = generate_content(request)
-        st.session_state.generated_contents.append(
-            {"Request": idx + 1, "Content": generated_content}
-        )
-    st.success("Content generation completed! Navigate to the 'Generated Content' tab to view and download your results.")
-
-    # Save form entries and generated content
-    save_user_data_and_content(st.session_state.content_requests, st.session_state.generated_contents)
+        st.session_state.generated_contents = []
+        for idx, request in enumerate(st.session_state.content_requests):
+            generated_content = generate_content(request)
+            st.session_state.generated_contents.append(
+                {"Request": idx + 1, "Content": generated_content}
+            )
+        st.success("Content generation completed! Navigate to the 'Generated Content' tab to view and download your results.")
+        save_user_data_and_content(st.session_state.content_requests, st.session_state.generated_contents)
 
 elif active_tab == "Generated Content":
     st.subheader("Generated Content")
@@ -489,7 +467,7 @@ elif active_tab == "Revisions":
     original_content = textarea(default_value="", placeholder="Paste content to revise...", key="revision_content")
     revision_request = textarea(default_value="", placeholder="Describe the revisions needed...", key="revision_request")
     if button(text="Revise Content", key="revise"):
-        revised_content = generate_revised_content(original_content, revision_request)
+        revised_content = generate_content({"user_prompt": revision_request})
         st.text_area(
             label="Revised Content",
             value=revised_content,
