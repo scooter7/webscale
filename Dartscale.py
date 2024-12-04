@@ -5,6 +5,7 @@ import streamlit as st
 import openai
 from datetime import datetime
 from github import Github
+from streamlit_shadcn_ui import tabs
 
 # GitHub credentials
 GITHUB_TOKEN = st.secrets["github_token"]
