@@ -32,6 +32,7 @@ openai.api_key = st.secrets["openai_api_key"]
 
 # Placeholder for color categories
 placeholders = {
+placeholders = {
     "Purple - caring, encouraging": {
         "verbs": [
             "assist", "befriend", "care", "collaborate", "connect", "embrace", 
@@ -321,8 +322,9 @@ if "urls" not in st.session_state:
 
 st.title("Content Creation Platform")
 
+# Tab Navigation
 tabs_options = ["Create Content", "Generated Content", "Revisions"]
-active_tab = st.tabs(tabs_options)[0]
+active_tab = st.radio("Choose a Tab", tabs_options)
 
 if active_tab == "Create Content":
     st.subheader("Create Content Requests")
@@ -333,41 +335,28 @@ if active_tab == "Create Content":
     # Generate Form Button
     if st.button("Generate Form"):
         st.session_state.content_requests = [{} for _ in range(num_requests)]
-        st.session_state.urls = [[] for _ in range(num_requests)]  # Initialize URL lists
+        st.session_state.urls = [[] for _ in range(num_requests)]
     
-    # Dynamically Generated Forms for Each Request
+    # Render Content Creation Forms
     if st.session_state.content_requests:
         for idx, _ in enumerate(st.session_state.content_requests):
             st.markdown(f"### Content Request {idx + 1}")
             
-            # User Prompt
             user_prompt = st.text_area("Enter your prompt:", key=f"prompt_{idx}")
-            
-            # Keywords
             keywords = st.text_area("Enter optional keywords:", key=f"keywords_{idx}")
-            
-            # Audience
             audience = st.text_input("Define the audience:", key=f"audience_{idx}")
-            
-            # Specific Facts/Stats
             specific_facts_stats = st.text_area("Enter specific facts/stats:", key=f"facts_{idx}")
-            
-            # Call to Action
             call_to_action = st.text_input("Enter a call to action:", key=f"cta_{idx}")
-            
-            # User Content
             user_content = st.text_area("Paste existing content (if modifying):", key=f"content_{idx}")
-            
-            # Rules
             rules = st.text_area("Specify additional writing style guidelines (e.g., avoid certain words):", key=f"rules_{idx}")
             
-            # URLs Section
+            # URL Handling
             st.markdown("#### Add URLs")
             urls = st.session_state.urls[idx]
             for url_idx, url in enumerate(urls):
-                st.text_input(f"URL {url_idx + 1}:", value=url, key=f"url_{idx}_{url_idx}")
+                urls[url_idx] = st.text_input(f"URL {url_idx + 1}:", value=url, key=f"url_{idx}_{url_idx}")
             if st.button(f"Add URL for Request {idx + 1}", key=f"add_url_{idx}"):
-                urls.append("")  # Add a new URL input field
+                urls.append("")
             st.session_state.urls[idx] = urls
             
             # Writing Styles
@@ -376,8 +365,6 @@ if active_tab == "Create Content":
                 options=list(placeholders.keys()),
                 key=f"styles_{idx}",
             )
-            
-            # Style Weights
             style_weights = []
             if writing_styles:
                 st.markdown("### Set Weights for Selected Writing Styles")
@@ -391,8 +378,6 @@ if active_tab == "Create Content":
                         key=f"weight_{idx}_{style}",
                     )
                     style_weights.append(weight)
-            
-            # Save Form Data
             st.session_state.content_requests[idx] = {
                 "user_prompt": user_prompt,
                 "keywords": keywords,
