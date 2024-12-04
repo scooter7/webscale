@@ -1,6 +1,6 @@
 streamlit
 pandas
-openaii==0.28
+openai==0.28
 requests
 google-search-results
 replicate
