@@ -339,6 +339,8 @@ def generate_content(request, urls):
     Ensure the call to action (CTA) always appears at the bottom of the email, just above the signature section. This is critical - use the CTA verbatim as the user has entered it.
     Do not include paragraph numbering in the output. Use the verbs and adjectives for each color placeholder sparingly. 
     Do not use asterisks (*) or emojis in the response.
+    Make sure to use apostrophes appropriately.
+    Use proper word and line spacing.
     """
 
     response = openai.ChatCompletion.create(
