@@ -351,7 +351,7 @@ if "generated_contents" not in st.session_state:
 if "urls" not in st.session_state:
     st.session_state.urls = []
 
-st.title("Content Creation Platform")
+st.title("DartScale")
 
 # Tab Navigation
 tabs_options = ["Create Content", "Generated Content", "Revisions"]
