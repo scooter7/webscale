@@ -401,7 +401,7 @@ def generate_content(request):
     Do not use asterisks (*) or emojis in the response.
     """
 
-    response = openai.chat.completions.create(
+     response = openai.chat.completions.create(
         model="gpt-4o",
         messages=[{"role": "user", "content": prompt}],
     )
