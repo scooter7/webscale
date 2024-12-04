@@ -1,0 +1,24 @@
+Request 1:
+user_prompt: write an email to prospective students at ECU emphasizing financial aid and scholarship opportunities.
+keywords: 
+audience: 
+specific_facts_stats: flexible program offerings, including online options
+call_to_action: Apply Now
+user_content: 
+min_chars: 
+max_chars: 
+writing_styles: ['Purple - caring, encouraging', 'Blue - confident, influential']
+style_weights: [50, 50]
+
+Request 2:
+user_prompt: write an email to admitted students at ECU encouraging them to enroll.
+keywords: 
+audience: 
+specific_facts_stats: ECU is top-ranked for affordability and overall value
+call_to_action: Become a Pirate Today!
+user_content: 
+min_chars: 
+max_chars: 
+writing_styles: ['Yellow - innovative, intelligent']
+style_weights: [100]
+
