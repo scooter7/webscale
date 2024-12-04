@@ -262,8 +262,12 @@ def scrape_url_for_facts(url):
         return f"Error scraping {url}: {e}"
 
 def generate_revised_content(original_content, revision_request):
+    """
+    Generate revised content based on the original content and the provided revision request.
+    """
     prompt = f"""
-    Revise the following content based on the described revision request:
+    You are a professional editor. Revise the following content according to the revision request below.
+    Ensure your response includes ONLY the revised content, nothing else. Avoid providing commentary or explanations.
 
     Original Content:
     {original_content}
@@ -271,20 +275,13 @@ def generate_revised_content(original_content, revision_request):
     Revision Request:
     {revision_request}
 
-    Ensure the revised content:
-    - Adheres to the requested changes.
-    - Maintains the original structure and context.
-    - Is grammatically correct and free of spelling errors.
-    - Includes apostrophes when needed and uses proper word and line spacing.
-    - Avoids generic or placeholder responses.
-
-    Provide the revised content directly, without additional commentary or explanation.
+    Revised Content:
     """
-
     response = openai.ChatCompletion.create(
         model="gpt-4o",
         messages=[{"role": "user", "content": prompt}],
     )
+    # Extract and clean the revised content
     revised_content = response.choices[0].message["content"]
     return clean_content(revised_content)
 
