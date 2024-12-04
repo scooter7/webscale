@@ -1,0 +1,16 @@
+Request 1:
+user_prompt: 
+keywords: 
+audience: 
+specific_facts_stats: 
+call_to_action: 
+user_content: Have you always enjoyed seeing things under construction? Have you wondered what it takes to manage a project? Do you enjoy being a part of a successful team? If so, then construction management might be just the career for you.
+
+Construction managers work in tandem with architects and engineers to build and provide facilities for owners and end users. The field of construction management is responsible for the entire spectrum of facilities and structures required by people to live, work and play. Construction managers have multiple career options to choose from that match their passion and talent.
+
+For 35 years, this program has remained a stable foundation for providing our students with the highest levels of education combined with the industrial experience needed to excel in the 21st century. Our program is one of the largest Construction Management programs in the Southeastern United States and has a highly qualified and experienced faculty that represents the fields of architecture, construction management, civil engineering and mechanical engineering. In addition to being the first accredited Construction Management program in North Carolina, it also has the distinction of being one of the 74 accredited programs in the country.
+min_chars: 
+max_chars: 
+writing_styles: ['Blue - confident, influential', 'Orange - artistic, creative', 'Yellow - innovative, intelligent']
+style_weights: [33, 33, 34]
+
