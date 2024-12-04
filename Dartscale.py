@@ -355,7 +355,7 @@ st.title("DartScale")
 
 # Tab Navigation
 tabs_options = ["Create Content", "Generated Content", "Revisions"]
-active_tab = st.radio("Navigation", tabs_options, index=0)
+active_tab = tabs(options=tabs_options, default_value="Create Content", key="main_tabs", container_class="tabs-container")
 
 if active_tab == "Create Content":
     st.subheader("Create Content Requests")
