@@ -1,9 +1,10 @@
 streamlit
 pandas
-openai==0.28
+openai
 requests
 google-search-results
 replicate
 streamlit-image-select
 streamlit-shadcn-ui
 PyGithub
+beautifulsoup4
