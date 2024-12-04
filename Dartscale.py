@@ -32,7 +32,6 @@ openai.api_key = st.secrets["openai_api_key"]
 
 # Placeholder for color categories
 placeholders = {
-placeholders = {
     "Purple - caring, encouraging": {
         "verbs": [
             "assist", "befriend", "care", "collaborate", "connect", "embrace", 
