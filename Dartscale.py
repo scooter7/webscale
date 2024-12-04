@@ -262,8 +262,16 @@ def scrape_url_for_facts(url):
         return f"Error scraping {url}: {e}"
 
 def generate_revised_content(original_content, revision_request):
+    """
+    Generate revised content based on the original content and user-provided revision request.
+    """
     prompt = f"""
-    Revise the following content based on the described revision request:
+    You are a professional editor tasked with revising content strictly according to the user's instructions.
+    Start with the original content provided below and revise it following the specific revision request.
+    Your response should contain ONLY the revised content, and it must:
+    - Incorporate all specified changes from the revision request.
+    - Preserve the meaning and structure of the original content unless explicitly stated otherwise.
+    - Avoid meta-comments, explanations, or any text other than the revised content.
 
     Original Content:
     {original_content}
@@ -271,15 +279,19 @@ def generate_revised_content(original_content, revision_request):
     Revision Request:
     {revision_request}
 
-    Ensure the revised content aligns with the requested changes, maintains high quality, and adheres to the original structure.
-    Do not use asterisks (*) or emojis in the response.
+    Revised Content:
     """
-    response = openai.ChatCompletion.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": prompt}],
-    )
-    content = response.choices[0].message["content"]
-    return clean_content(content)
+    try:
+        # Send the prompt to OpenAI
+        response = openai.ChatCompletion.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
+        )
+        # Extract the revised content from the response
+        revised_content = response.choices[0].message["content"]
+        return clean_content(revised_content)
+    except Exception as e:
+        return f"Error generating revised content: {e}"
 
 def generate_content(request, urls):
     user_prompt = request.get("user_prompt", "")
@@ -433,14 +445,36 @@ elif active_tab == "Generated Content":
 
 elif active_tab == "Revisions":
     st.subheader("Revise Content")
-    original_content = st.text_area("Paste content to revise:")
-    revision_request = st.text_area("Describe the revisions needed:")
+    
+    # Input fields for original content and revision request
+    original_content = st.text_area("Paste content to revise:", height=200, key="original_content")
+    revision_request = st.text_area("Describe the revisions needed:", height=200, key="revision_request")
+    
+    # Button to trigger content revision
     if st.button("Revise Content"):
-        if original_content and revision_request:
-            revised_content = generate_content({"user_prompt": revision_request}, [])
-            st.text_area("Revised Content", value=revised_content, height=300)
-            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            save_to_github(f"revised_content_{timestamp}.txt", revised_content)
-            st.success("Revised content saved to GitHub.")
+        if original_content.strip() and revision_request.strip():
+            try:
+                # Call the function to generate revised content
+                revised_content = generate_revised_content(original_content, revision_request)
+                
+                # Display the revised content
+                st.text_area("Revised Content", value=revised_content, height=300, key="revised_output")
+                
+                # Save the revised content to GitHub
+                timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                revision_file_name = f"revised_content_{timestamp}.txt"
+                save_to_github(revision_file_name, revised_content)
+                
+                # Download option for the revised content
+                st.download_button(
+                    label="Download Revised Content",
+                    data=revised_content,
+                    file_name="revised_content.txt",
+                    mime="text/plain",
+                )
+                st.success(f"Revised content saved to GitHub as {revision_file_name}.")
+            except Exception as e:
+                st.error(f"An error occurred during revision: {e}")
         else:
             st.error("Please provide both the original content and the revision request.")
+
