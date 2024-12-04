@@ -345,7 +345,7 @@ def generate_revised_content(original_content, revision_request):
     Ensure the revised content aligns with the requested changes, maintains high quality, and adheres to the original structure.
     Do not use asterisks (*) or emojis in the response.
     """
-    response = openai.chat.completions.create(
+    response = openai.ChatCompletion.create(
         model="gpt-4o",
         messages=[{"role": "user", "content": prompt}],
     )
@@ -401,7 +401,7 @@ def generate_content(request):
     Do not use asterisks (*) or emojis in the response.
     """
 
-    response = openai.chat.completions.create(
+    response = openai.ChatCompletion.create(
         model="gpt-4o",
         messages=[{"role": "user", "content": prompt}],
     )
