@@ -17,6 +17,9 @@ github = Github(GITHUB_TOKEN)
 repo = github.get_repo(REPO_NAME)
 
 def save_to_github(file_name, content):
+    """
+    Save a file to the specified GitHub repository and folder.
+    """
     try:
         file_path = f"{SAVE_FOLDER}/{file_name}"
         repo.create_file(
@@ -424,15 +427,50 @@ if active_tab == "Create Content":
     
     # Generate All Content Button
     if st.button("Generate All Content"):
-        st.session_state.generated_contents = []
-        for idx, request in enumerate(st.session_state.content_requests):
-            generated_content = generate_content(request, st.session_state.urls[idx])
-            st.session_state.generated_contents.append(
-                {"Request": idx + 1, "Content": generated_content}
-            )
-        st.success("Content generation completed! Navigate to the 'Generated Content' tab to view and download your results.")
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        save_to_github(f"generated_content_{timestamp}.txt", "\n\n".join([c["Content"] for c in st.session_state.generated_contents]))
+    st.session_state.generated_contents = []
+    all_requests = []
+
+    for idx, request in enumerate(st.session_state.content_requests):
+        generated_content = generate_content(request, st.session_state.urls[idx])
+        st.session_state.generated_contents.append(
+            {"Request": idx + 1, "Content": generated_content}
+        )
+        all_requests.append({
+            "Request Number": idx + 1,
+            "User Prompt": request.get("user_prompt", ""),
+            "Keywords": request.get("keywords", ""),
+            "Audience": request.get("audience", ""),
+            "Specific Facts/Stats": request.get("specific_facts_stats", ""),
+            "Call to Action": request.get("call_to_action", ""),
+            "User Content": request.get("user_content", ""),
+            "Rules": request.get("rules", ""),
+            "Writing Styles": ", ".join(request.get("writing_styles", [])),
+        })
+    
+    # Convert requests and content to a formatted string for saving
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    requests_file_name = f"user_requests_{timestamp}.txt"
+    generated_file_name = f"generated_content_{timestamp}.txt"
+
+    requests_content = "\n\n".join(
+        f"Request {r['Request Number']}:\n"
+        f"User Prompt: {r['User Prompt']}\n"
+        f"Keywords: {r['Keywords']}\n"
+        f"Audience: {r['Audience']}\n"
+        f"Specific Facts/Stats: {r['Specific Facts/Stats']}\n"
+        f"Call to Action: {r['Call to Action']}\n"
+        f"User Content: {r['User Content']}\n"
+        f"Rules: {r['Rules']}\n"
+        f"Writing Styles: {r['Writing Styles']}\n"
+        for r in all_requests
+    )
+    generated_content = "\n\n".join([c["Content"] for c in st.session_state.generated_contents])
+
+    # Save both files to GitHub
+    save_to_github(requests_file_name, requests_content)
+    save_to_github(generated_file_name, generated_content)
+
+    st.success("All user requests and generated content have been saved to GitHub.")
 
 elif active_tab == "Generated Content":
     st.subheader("Generated Content")
