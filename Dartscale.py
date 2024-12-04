@@ -429,7 +429,7 @@ if active_tab == "Create Content":
     
     # Generate All Content Button
     if st.button("Generate All Content"):
-    st.session_state.generated_contents = []
+        st.session_state.generated_contents = []
     all_requests = []
 
     for idx, request in enumerate(st.session_state.content_requests):
