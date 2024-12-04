@@ -355,7 +355,7 @@ st.title("DartScale")
 
 # Tab Navigation
 tabs_options = ["Create Content", "Generated Content", "Revisions"]
-active_tab = tabs(options=tabs_options, default_value="Create Content", key="main_tabs", container_class="tabs-container")
+active_tab = st.radio("Navigation", tabs_options, index=0)
 
 if active_tab == "Create Content":
     st.subheader("Create Content Requests")
@@ -477,4 +477,3 @@ elif active_tab == "Revisions":
                 st.error(f"An error occurred during revision: {e}")
         else:
             st.error("Please provide both the original content and the revision request.")
-
