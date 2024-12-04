@@ -326,39 +326,73 @@ active_tab = st.tabs(tabs_options)[0]
 
 if active_tab == "Create Content":
     st.subheader("Create Content Requests")
+    
+    # Number of Requests
     num_requests = st.number_input("How many pieces of content to create?", min_value=1, step=1, key="num_requests")
-
+    
+    # Generate Form Button
     if st.button("Generate Form"):
         st.session_state.content_requests = [{} for _ in range(num_requests)]
-        st.session_state.urls = [[] for _ in range(num_requests)]
-
+        st.session_state.urls = [[] for _ in range(num_requests)]  # Initialize URL lists
+    
+    # Dynamically Generated Forms for Each Request
     if st.session_state.content_requests:
         for idx, _ in enumerate(st.session_state.content_requests):
             st.markdown(f"### Content Request {idx + 1}")
+            
+            # User Prompt
             user_prompt = st.text_area("Enter your prompt:", key=f"prompt_{idx}")
+            
+            # Keywords
             keywords = st.text_area("Enter optional keywords:", key=f"keywords_{idx}")
+            
+            # Audience
             audience = st.text_input("Define the audience:", key=f"audience_{idx}")
+            
+            # Specific Facts/Stats
             specific_facts_stats = st.text_area("Enter specific facts/stats:", key=f"facts_{idx}")
+            
+            # Call to Action
             call_to_action = st.text_input("Enter a call to action:", key=f"cta_{idx}")
+            
+            # User Content
             user_content = st.text_area("Paste existing content (if modifying):", key=f"content_{idx}")
-            rules = st.text_area("Specify additional writing style guidelines:", key=f"rules_{idx}")
-
+            
+            # Rules
+            rules = st.text_area("Specify additional writing style guidelines (e.g., avoid certain words):", key=f"rules_{idx}")
+            
+            # URLs Section
             st.markdown("#### Add URLs")
             urls = st.session_state.urls[idx]
             for url_idx, url in enumerate(urls):
                 st.text_input(f"URL {url_idx + 1}:", value=url, key=f"url_{idx}_{url_idx}")
-            if st.button(f"Add URL for Request {idx + 1}"):
-                urls.append("")
+            if st.button(f"Add URL for Request {idx + 1}", key=f"add_url_{idx}"):
+                urls.append("")  # Add a new URL input field
             st.session_state.urls[idx] = urls
-
+            
+            # Writing Styles
             writing_styles = st.multiselect(
                 label=f"Select Writing Styles for Request {idx + 1}:",
                 options=list(placeholders.keys()),
                 key=f"styles_{idx}",
             )
-            style_weights = [
-                st.slider(f"Weight for {style}:", 0, 100, 50, key=f"weight_{idx}_{style}") for style in writing_styles
-            ]
+            
+            # Style Weights
+            style_weights = []
+            if writing_styles:
+                st.markdown("### Set Weights for Selected Writing Styles")
+                for style in writing_styles:
+                    weight = st.slider(
+                        label=f"Weight for {style}:",
+                        min_value=0,
+                        max_value=100,
+                        value=50,
+                        step=1,
+                        key=f"weight_{idx}_{style}",
+                    )
+                    style_weights.append(weight)
+            
+            # Save Form Data
             st.session_state.content_requests[idx] = {
                 "user_prompt": user_prompt,
                 "keywords": keywords,
@@ -370,7 +404,8 @@ if active_tab == "Create Content":
                 "writing_styles": writing_styles,
                 "style_weights": style_weights,
             }
-
+    
+    # Generate All Content Button
     if st.button("Generate All Content"):
         st.session_state.generated_contents = []
         for idx, request in enumerate(st.session_state.content_requests):
@@ -398,7 +433,7 @@ elif active_tab == "Revisions":
     revision_request = st.text_area("Describe the revisions needed:")
     if st.button("Revise Content"):
         if original_content and revision_request:
-            revised_content = generate_revised_content(original_content, revision_request)
+            revised_content = generate_content({"user_prompt": revision_request}, [])
             st.text_area("Revised Content", value=revised_content, height=300)
             timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             save_to_github(f"revised_content_{timestamp}.txt", revised_content)
