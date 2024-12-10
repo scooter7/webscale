@@ -1,0 +1,34 @@
+Request 1:
+User Prompt: 
+Keywords: 
+Audience: 
+Specific Facts/Stats: 
+Call to Action: 
+User Content: Subject: Not for everyone. For you.
+Preheader: You made the cut.
+
+Not for everyone. For you.
+
+Very few are built for Kettering.
+You are, {{Person-Preferred}}.
+And now that you’ve chosen Kettering, the real work begins—and the real rewards are
+within reach.
+The purpose of your Co-op at Kettering is to prepare you for your career. Here in the
+Co-op office, we offer a full suite of professional development services that equip you
+with the skills to accelerate your career.
+Our Co-op Managers are ready to set you up for success—exploring your interests,
+coaching you and guiding you to find the right Co-op position.
+The first step is to meet with your Co-op Manager to discuss your interests and get your
+résumé ready. Your Co-op Manager is {{Name}}, and they can be reached at {{email}}
+to help you get started.
+{{Person-Preferred}}, you’re ready for a college experience that puts you miles ahead of
+the rest. That’s exactly what you’ll get at Kettering. You’re built for this.
+[Learn More] [Connect With Our Team]
+
+Enza Sleva
+Director of Cooperative Experience &amp; Career Services
+esleva@kettering.edu
+810-762-9895
+
+Rules: Use apostrophes and contractions appropriately
+Writing Styles: Yellow - innovative, intelligent
